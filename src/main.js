@@ -12,6 +12,6 @@ app.mount('#app');
 app.use(
   new VueSocketIO({
     debug: true,
-    connection: io('http://localhost:8000'),
+    connection: io('http://localhost:8888'),
   }),
 );

@@ -9,8 +9,8 @@ const io = require('socket.io')(server, {
     }
 });
 
-server.listen(8000);
-console.log('Server is running on port:8000');
+server.listen(8888);
+console.log('Server is running on port:8888');
 
 io.on('connection', (socket) => {
     console.log('user ' + socket.id + ' connected');
