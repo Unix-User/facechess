@@ -17,6 +17,9 @@
 import { ref } from 'vue';
 import { TheChessboard } from 'vue3-chessboard';
 import 'vue3-chessboard/style.css';
+import { io } from "socket.io-client"
+var socket = io.connect("https://localhost:8888")
+
 
 export default {
   components: {
@@ -30,6 +33,9 @@ const boardAPI = ref();
 const boardConfig = {
   coordinates: false,
   autoCastle: false,
+  onMove: (from, to) => {
+    socket.emit({ from, to });
+  },
 };
 
 function handleCheckmate(isMated) {

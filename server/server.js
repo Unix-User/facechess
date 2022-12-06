@@ -18,9 +18,11 @@ io.on('connection', (socket) => {
         socket.broadcast.emit('user-connected', id)
         console.log(socket.id + ' received ' + id + ' peer, joining room: ' + room);
         socket.on('make-move', (data) => {
+            
             if (isValidMove(move)) {
                 // envia a jogada para todos os outros usuários
                 socket.broadcast.emit('move-made', move);
+                console.log('user ' + socket.id + ' moved ' + move);
               }
         });
         socket.on('disconnect', () => {
