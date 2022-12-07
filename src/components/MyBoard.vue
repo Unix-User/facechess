@@ -10,6 +10,7 @@
     </section>
     <TheChessboard :board-config="boardConfig" @board-created="(api) => (boardAPI = api)"
       @checkmate="handleCheckmate" />
+
   </main>
 </template>
 
@@ -17,41 +18,47 @@
 import { ref } from 'vue';
 import { TheChessboard } from 'vue3-chessboard';
 import 'vue3-chessboard/style.css';
-import { io } from "socket.io-client"
-var socket = io.connect("https://localhost:8888")
-
+// import { io } from "socket.io-client"
+// var socket = io.connect("http://localhost:8888")
+const boardAPI = ref();
 
 export default {
   components: {
     TheChessboard
   },
   setup() {
-    return { boardAPI, boardConfig, handleCheckmate, toggleOrientation, resetBoard };
+    function handleCheckmate(isMated) {
+      if (isMated === 'w') {
+        alert('Black wins!');
+      } else {
+        alert('White wins!');
+      }
+    }
+
+    function toggleOrientation() {
+      boardAPI.value?.board.toggleOrientation();
+    }
+
+    function resetBoard() {
+      boardAPI.value?.resetBoard();
+    }
+
+    function handleBoardCreated(api) {
+      boardAPI.value = api;
+      boardAPI.value.registerMoveListener(handleMove);
+    }
+
+    function handleMove(move) {
+      console.log(`Move made: ${move}`);
+    }
+
+    const boardConfig = {
+      coordinates: false,
+      autoCastle: false,
+    };
+
+    return { boardConfig, handleCheckmate, toggleOrientation, resetBoard, handleBoardCreated, handleMove};
   }
 };
-const boardAPI = ref();
-const boardConfig = {
-  coordinates: false,
-  autoCastle: false,
-  onMove: (from, to) => {
-    socket.emit({ from, to });
-  },
-};
-
-function handleCheckmate(isMated) {
-  if (isMated === 'w') {
-    alert('Black wins!');
-  } else {
-    alert('White wins!');
-  }
-}
-
-function toggleOrientation() {
-  boardAPI.value?.board.toggleOrientation();
-}
-
-function resetBoard() {
-  boardAPI.value?.resetBoard();
-}
 
 </script>

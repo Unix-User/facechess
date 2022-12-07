@@ -16,18 +16,20 @@ io.on('connection', (socket) => {
     console.log('user ' + socket.id + ' connected');
     socket.on('join-room', (room, id) => {
         socket.broadcast.emit('user-connected', id)
+        socket.broadcast.emit('move-made', 'a2-a4');
         console.log(socket.id + ' received ' + id + ' peer, joining room: ' + room);
-        socket.on('make-move', (data) => {
-            
-            if (isValidMove(move)) {
-                // envia a jogada para todos os outros usuários
-                socket.broadcast.emit('move-made', move);
-                console.log('user ' + socket.id + ' moved ' + move);
-              }
-        });
+        
         socket.on('disconnect', () => {
             socket.broadcast.emit('user-disconnected', id)
             console.log('user ' + socket.id + ' disconnected');
         });
+    });
+    socket.on('make-move', (data) => {
+        console.log('user ' + socket.id + ' está se movendo');
+        if (isValidMove(move)) {
+            // envia a jogada para todos os outros usuários
+            socket.broadcast.emit('move-made', move);
+            console.log('user ' + socket.id + ' moved ' + move);
+          }
     });
 });

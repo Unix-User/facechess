@@ -1,13 +1,7 @@
 <template>
   <div id="app">
     <MyBoard></MyBoard> 
-    <VideoStream></VideoStream>
-
-    <!-- Adiciona o elemento div com a classe video-container -->
-    <div class="video-container">
-      <!-- Adiciona o elemento video dentro do div -->
-      <video :src="videoUrl"></video> <!-- Inclui a propriedade src no elemento video -->
-    </div>
+    <!-- <VideoStream></VideoStream> -->
   </div>
 </template>
 
@@ -43,18 +37,13 @@
 
 <script>
 import MyBoard from './components/MyBoard.vue';
-import VideoStream from './components/VideoStream.vue'; // Importa o componente VideoStream
+// import VideoStream from './components/VideoStream.vue'; // Importa o componente VideoStream
 
 export default {
   name: 'App',
-  data() {
-    return {
-      videoUrl: 'https://www.example.com/video.mp4' // Define a URL do vídeo
-    }
-  },
   components: {
     MyBoard, 
-    VideoStream // Inclui o componente VideoStream na seção components do seu componente principal
+    // VideoStream
   }
 };
 </script>
