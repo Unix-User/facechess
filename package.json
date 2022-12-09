@@ -17,7 +17,8 @@
     "socket.io": "^4.5.4",
     "socket.io-client": "^4.5.4",
     "vue": "^3.2.13",
-    "vue-socket.io": "^3.0.10"
+    "vue-socket.io": "^3.0.10",
+    "youtube-vue3": "^0.1.15"
   },
   "devDependencies": {
     "@babel/core": "^7.12.16",

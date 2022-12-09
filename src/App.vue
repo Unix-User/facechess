@@ -1,49 +1,64 @@
 <template>
   <div id="app">
-    <MyBoard></MyBoard> 
-    <!-- <VideoStream></VideoStream> -->
+
+    
+    <MyBoard>
+
+    </MyBoard> 
+
+    <Youtube>
+// posicionar youtube style = "position: absolute; top: 0; right: 0; width: 100px; height: 100px; border: 1px solid #000; z-index: 100;"
+    </Youtube>
+    
   </div>
 </template>
 
 <style>
+
   #app {
-        /* Define o tamanho do elemento pai como o tamanho do viewport */
-        width: 100vw;
-        height: 100vh;
-
-        /* Define o tamanho máximo do componente MyBoard como 100% do tamanho do elemento pai */
-        max-width: 100%;
-        max-height: 100%;
-
-        /* Ajusta o conteúdo do componente MyBoard para se encaixar dentro do tamanho limitado */
-        object-fit: scale-down;
+    font-family: 'Avenir', Helvetica, Arial, sans-serif;
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+    text-align: center;
+    color: #2c3e50;
+ 
   }
 
   /* Define o estilo do quadrado de vídeo flutuante */
   .video-container {
-    /* Posiciona o quadrado de vídeo flutuante no canto inferior direito da tela */
     position: absolute;
-    bottom: 0;
+    top: 0;
     right: 0;
+    width: 100px;
+    height: 100px;
+    border: 1px solid #000;
+    z-index: 100;
+        
+  }
 
-    /* Define o tamanho do quadrado de vídeo flutuante */
-    width: 200px;
-    height: 200px;
+  #myBoard {
+    width: 800px;
 
-    /* Define o estilo do elemento video */
+ 
+  }
+  #video {
+    width: 100%;
+    height: 100%;
 
   }
 </style>
 
+
 <script>
 import MyBoard from './components/MyBoard.vue';
-// import VideoStream from './components/VideoStream.vue'; // Importa o componente VideoStream
+ import Youtube from './components/Youtube.vue'; // Importa o componente Youtube
 
 export default {
   name: 'App',
   components: {
     MyBoard, 
-    // VideoStream
+     Youtube
+    
   }
 };
 </script>
