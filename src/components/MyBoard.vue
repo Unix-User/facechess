@@ -4,7 +4,10 @@
 
 <script>
 import { Chess } from 'chess.js'
-import Chessboard from "chessboardjs-vue3";
+import Chessboard from "chessboardjs-vue3"
+import io from 'socket.io-client'
+const socket = io('http://localhost:8888');
+
 export default {
   data() {
     return {
@@ -28,11 +31,12 @@ export default {
       }
     },
     onDrop(source, target) {
-      if (source[1] === '1' || source[1] === '8' || target[1] === '1' || target[1] === '8') {
+      var piece = this.game.get(source);
+      if (piece && piece.type === 'p' && (target[1] === '8' || target[1] === '1')) {
         var move = this.game.move({
           from: source,
           to: target,
-          promotion: 'q' // Try to promote the pawn to a queen
+          promotion: 'q'
         });
       } else {
         move = this.game.move({
@@ -40,8 +44,8 @@ export default {
           to: target
         });
       }
-      console.log(move)
       if (move) {
+        socket.emit('move', move);
         this.board.position(this.game.fen())
       } else {
         return 'snapback'
@@ -53,6 +57,7 @@ export default {
   },
   mounted() {
     console.log(this.game.fen())
+    socket.emit('joined', 'room_name');
     this.board = Chessboard('myBoard', this.config)
   }
 }
