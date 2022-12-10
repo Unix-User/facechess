@@ -4,53 +4,63 @@ const io = require('socket.io')(server, {
     cors: {
         origin: 'http://localhost:8080',
         methods: ["GET", "POST"],
-        allowedHeaders: ['Access-Control-Allow-Origin'],
+        allowedHeaders: ['Content-Type', 'Authorization'],
         credentials: false
     }
 });
 
-var players;
-var games = Array(100);
-for (let i = 0; i < 100; i++) {
-    games[i] = {players: 0 , pid: [0 , 0]};
-}
+let rooms = [];
 
 server.listen(8888);
 console.log('Server is running on port:8888');
 
 io.on('connection', (socket) => {
+    let playerId = socket.id;
     socket.on('joined', function (roomId) {
-        if (games[roomId].players < 2) {
-            games[roomId].players++;
-            games[roomId].pid[games[roomId].players - 1] = playerId;
+        let color;
+        let found = false;
+        for (let i = 0; i < rooms.length; i++) {
+            if (rooms[i].players < 2) {
+                roomId = i;
+                found = true;
+                break;
+            }
         }
-        else {
-            socket.emit('full', roomId)
-            return;
+        if (!found) {
+            roomId = rooms.length;
+            rooms.push({ players: 0, pid: [null, null] });
         }
-        console.log(games[roomId]);
-        players = games[roomId].players
-        if (players % 2 == 0) color = 'black';
-        else color = 'white';
+
+        for (let i = 0; i < rooms[roomId].pid.length; i++) {
+            if (rooms[roomId].pid[i] === null) {
+                rooms[roomId].pid[i] = playerId;
+                color = (i === 0) ? 'white' : 'black';
+                break;
+            }
+        }
+        rooms[roomId].players++;
+        console.log('Jogador conectado: ' + playerId);
+        console.log('Jogador ' + playerId + " entrou na sala " + roomId);
+        console.log(rooms[roomId]);
+        socket.emit('room', roomId);
         socket.emit('player', {
             playerId,
-            players,
+            players: rooms[roomId].players,
             color,
             roomId
-        })
-    });
-    socket.on('move', function (msg) {
-        socket.broadcast.emit('move', msg);
-    });
-    socket.on('play', function (msg) {
-        socket.broadcast.emit('play', msg);
-        console.log("ready " + msg);
+        });
     });
     socket.on('disconnect', function () {
-        for (let i = 0; i < 100; i++) {
-            if (games[i].pid[0] == playerId || games[i].pid[1] == playerId)
-                games[i].players--;
+        for (let i = 0; i < rooms.length; i++) {
+            if (rooms[i].pid[0] === playerId || rooms[i].pid[1] === playerId) {
+                rooms[i].players--;
+                if (rooms[i].players === 0) {
+                    rooms.splice(i, 1);
+                } else {
+                    rooms[i].pid[0] === playerId ? rooms[i].pid[0] = null : rooms[i].pid[1] = null;
+                }
+                break;
+            }
         }
-        console.log(playerId + ' disconnected');
     });
 });

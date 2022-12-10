@@ -9,6 +9,9 @@ import io from 'socket.io-client'
 const socket = io('http://localhost:8888');
 
 export default {
+  props: {
+    room: Object,
+  },
   data() {
     return {
       board: null,
@@ -45,7 +48,7 @@ export default {
         });
       }
       if (move) {
-        socket.emit('move', move);
+        socket.emit('move', this.move);
         this.board.position(this.game.fen())
       } else {
         return 'snapback'
@@ -57,8 +60,15 @@ export default {
   },
   mounted() {
     console.log(this.game.fen())
-    socket.emit('joined', 'room_name');
     this.board = Chessboard('myBoard', this.config)
+    socket.emit('joined', this.room )
+    socket.on('room', function (roomNumber) {
+      console.log('Sala:', roomNumber);
+    });
+
+    socket.on('player', function (data) {
+      console.log('Dados do jogador:', data);
+    });
   }
 }
 </script>
