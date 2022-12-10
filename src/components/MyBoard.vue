@@ -60,7 +60,7 @@ export default {
   },
   mounted() {
     console.log(this.game.fen())
-    this.board = Chessboard('myBoard')
+    this.board = Chessboard('myBoard', this.config)
     socket.emit('joined', this.room )
     socket.on('room', function (roomNumber) {
       console.log('Sala:', roomNumber);
