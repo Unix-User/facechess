@@ -6,7 +6,7 @@
   
   <div> 
 {
-    style = "position: absolute; top: 0; right: 0; width: 100px; height: 100px; border: 1px solid #000; z-index: 100;"
+    style = "position: absolute; top: 0; right: 0; width: 179px; height: 135px; border: 1px solid #000; z-index: 100;"
      }
 
     <input type="text" v-model="temp.video_id" placeholder="d98ejnKa-g8" />
