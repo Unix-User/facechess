@@ -99,7 +99,7 @@
         },
         handleStream(call) {
             call.on("stream", (remoteStream) => {
-                this.addVideoStream(call.peer, remoteStream)
+                this.addYoutube(call.peer, remoteStream)
             });
             call.on("error", (err) => {
                 alert(err)
@@ -112,7 +112,7 @@
             this.peers[call.peer] = call
   
         },
-        addVideoStream(id, stream) {
+        addYoutube(id, stream) {
             let i = this.videoList.map(video => video.id).indexOf(id)
             if (i == -1) {
                 this.videoList.push({ stream, id })
@@ -128,7 +128,7 @@
                 { video: true, audio: true }
             ).then((stream) => {
                 this.myStream = stream
-                this.addVideoStream(this.ownId, this.myStream)
+                this.addYoutube(this.ownId, this.myStream)
                 this.myPeer.on("call", (call) => {
                     if (confirm(`Accept call from ${call.peer}?`)) {
                         call.answer(stream)
