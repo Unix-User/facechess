@@ -48,10 +48,23 @@ export default {
         });
       }
       if (move) {
-        socket.emit('move', this.move);
+        socket.emit('move', move);
         this.board.position(this.game.fen())
       } else {
         return 'snapback'
+      }
+    },
+    onReceivedMove(source, target) {
+      if (this.game) {
+        const move = this.game.move({
+          from: source,
+          to: target
+        });
+        if (move) {
+          this.board.position(this.game.fen())
+        } else {
+          return 'snapback'
+        }
       }
     },
     onSnapEnd() {
@@ -59,15 +72,17 @@ export default {
     }
   },
   mounted() {
-    console.log(this.game.fen())
     this.board = Chessboard('myBoard', this.config)
-    socket.emit('joined', this.room )
-    socket.on('room', function (roomNumber) {
-      console.log('Sala:', roomNumber);
+    socket.emit('joined', this.room)
+    socket.on('room', function (data) {
+      console.log('Sala:', data);
     });
-
     socket.on('player', function (data) {
       console.log('Dados do jogador:', data);
+    });
+    socket.on('move-received', (data) => {
+      console.log(data);
+      this.onReceivedMove(data.from, data.to)
     });
   }
 }

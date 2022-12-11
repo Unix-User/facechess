@@ -1,49 +1,37 @@
 <template>
   <div id="app">
-    <MyBoard></MyBoard> 
-     <Youtube></Youtube> -->
+    <MyBoard></MyBoard>
+    <!-- <Youtube></Youtube> -->
   </div>
 </template>
 
 <style>
-  #app {
-        /* Define o tamanho do elemento pai como o tamanho do viewport */
-        width: 100vw;
-        height: 100vh;
+#app {
+  width: 100vw;
+  height: 100vh;
+  max-width: 100%;
+  max-height: 100%;
+  object-fit: scale-down;
+}
 
-        /* Define o tamanho máximo do componente MyBoard como 100% do tamanho do elemento pai */
-        max-width: 100%;
-        max-height: 100%;
-
-        /* Ajusta o conteúdo do componente MyBoard para se encaixar dentro do tamanho limitado */
-        object-fit: scale-down;
-  }
-
-  /* Define o estilo do quadrado de vídeo flutuante */
-  .video-container {
-    /* Posiciona o quadrado de vídeo flutuante no canto inferior direito da tela */
-    position: absolute;
-    bottom: 0;
-    right: 0;
-
-    /* Define o tamanho do quadrado de vídeo flutuante */
-    width: 200px;
-    height: 200px;
-
-    /* Define o estilo do elemento video */
-
-  }
+.video-container {
+  position: absolute;
+  bottom: 0;
+  right: 0;
+  width: 200px;
+  height: 200px;
+}
 </style>
 
 <script>
 import MyBoard from './components/MyBoard.vue';
- import Youtube from './components/Youtube.vue'; // Importa o componente Youtube
+// import Youtube from './components/Youtube.vue'; // Importa o componente Youtube
 
 export default {
   name: 'App',
   components: {
-    MyBoard, 
-    Youtube // Adiciona o componente Youtube ao componente App
+    MyBoard,
+    // Youtube // Adiciona o componente Youtube ao componente App
   }
 };
 </script>
