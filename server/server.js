@@ -1,9 +1,14 @@
 const { Chess } = require('chess.js');
 const app = require('express')();
-const server = require('http').Server(app);
 require('dotenv').config()
 const serverUrl = process.env.VUE_APP_SERVER_URL + ':' + process.env.VUE_APP_SERVER_PORT
-const clientUrl = process.env.VUE_APP_CLIENT_URL + ':' + process.env.VUE_APP_CLIENT_PORT
+const clientUrl = process.env.VUE_APP_CLIENT_URL
+const fs = require('fs');
+const server = require('https').Server({
+    key: fs.readFileSync(process.env.VUE_APP_KEY),
+    cert: fs.readFileSync(process.env.VUE_APP_CERTIFICATE)
+});
+
 const io = require('socket.io')(server, {
     cors: {
         origin: clientUrl,
