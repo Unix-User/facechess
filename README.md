@@ -8,9 +8,9 @@ Made with passion, [vue3](https://vuejs.org/), [peerjs](https://peerjs.com/), [s
 npm install
 ```
 
-### Before start you need to rename the .env file or create yours own
+### Before start you need to rename the .env file or create your own
 ```
-move .env.example .env
+cp .env.example .env
 ```
 
 ### Compiles and hot-reloads for development
