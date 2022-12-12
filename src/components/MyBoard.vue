@@ -6,7 +6,8 @@
 import { Chess } from 'chess.js'
 import Chessboard from "chessboardjs-vue3"
 import io from 'socket.io-client'
-const socket = io('http://localhost:8888');
+const url = process.env.VUE_APP_SERVER_URL + ':' + process.env.VUE_APP_SERVER_PORT
+const socket = io(url);
 
 export default {
   props: {
@@ -49,22 +50,29 @@ export default {
       }
       if (move) {
         socket.emit('move', move);
-        this.board.position(this.game.fen())
+        this.onSnapEnd()
       } else {
         return 'snapback'
       }
     },
     onReceivedMove(source, target) {
-      if (this.game) {
-        const move = this.game.move({
+      var piece = this.game.get(source);
+      if (piece && piece.type === 'p' && (target[1] === '8' || target[1] === '1')) {
+        var move = this.game.move({
+          from: source,
+          to: target,
+          promotion: 'q'
+        });
+      } else {
+        move = this.game.move({
           from: source,
           to: target
         });
-        if (move) {
-          this.board.position(this.game.fen())
-        } else {
-          return 'snapback'
-        }
+      }
+      if (move) {
+        this.onSnapEnd()
+      } else {
+        return 'snapback'
       }
     },
     onSnapEnd() {
@@ -74,15 +82,16 @@ export default {
   mounted() {
     this.board = Chessboard('myBoard', this.config)
     socket.emit('joined', this.room)
-    socket.on('room', function (data) {
+    socket.on('room', (data) => {
       console.log('Sala:', data);
     });
-    socket.on('player', function (data) {
+    socket.on('player', (data) => {
       console.log('Dados do jogador:', data);
     });
     socket.on('move-received', (data) => {
-      console.log(data);
+      console.log(data)
       this.onReceivedMove(data.from, data.to)
+      this.onSnapEnd()
     });
   }
 }

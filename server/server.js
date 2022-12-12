@@ -1,9 +1,12 @@
 const { Chess } = require('chess.js');
 const app = require('express')();
 const server = require('http').Server(app);
+require('dotenv').config()
+const serverUrl = process.env.VUE_APP_SERVER_URL + ':' + process.env.VUE_APP_SERVER_PORT
+const clientUrl = process.env.VUE_APP_CLIENT_URL + ':' + process.env.VUE_APP_CLIENT_PORT
 const io = require('socket.io')(server, {
     cors: {
-        origin: 'http://localhost:8080',
+        origin: clientUrl,
         methods: ["GET", "POST"],
         allowedHeaders: ['Content-Type', 'Authorization'],
         credentials: false
@@ -11,12 +14,9 @@ const io = require('socket.io')(server, {
 });
 
 const game = new Chess();
-function moveIsValid(move) {
-
-}
 let rooms = [];
-server.listen(8888);
-console.log('Server is running on port:8888');
+server.listen(process.env.VUE_APP_SERVER_PORT);
+console.log('Server is running on: ' + serverUrl);
 
 io.on('connection', (socket) => {
     let playerId = socket.id;
@@ -69,7 +69,7 @@ io.on('connection', (socket) => {
                 } else {
                     rooms[i].pid[0] === playerId ? rooms[i].pid[0] = null : rooms[i].pid[1] = null;
                 }
-                (rooms[i]) ? console.log('a player had disconected from room:' + i, rooms[i]) :console.log('last player disconected there is no rooms now');
+                (rooms[i]) ? console.log('a player had disconected from room:' + i, rooms[i]) : console.log('last player disconected there is no rooms now');
                 break;
             }
         }
