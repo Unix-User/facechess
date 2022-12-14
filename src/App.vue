@@ -1,37 +1,72 @@
-<template>
-  <div id="app">
-    <MyBoard></MyBoard>
-    <!-- <Youtube></Youtube> -->
-  </div>
-</template>
+  <template>
+    <div id="app" >
+      <proprety size="24">
+    <span style="color:white">Sala 1 EXEMPLO--------<span style="color:yellow">Você é o jogador 1</span></span>
+  </proprety>
+        <MyBoard></MyBoard>
+        <MainChat></MainChat>
+        <Youtube></Youtube><Youtube></Youtube>
 
-<style>
-#app {
-  width: 100vw;
-  height: 100vh;
-  max-width: 100%;
-  max-height: 100%;
-  object-fit: scale-down;
-}
+    </div>
 
-.video-container {
-  position: absolute;
-  bottom: 0;
-  right: 0;
-  width: 200px;
-  height: 200px;
-}
-</style>
-
-<script>
-import MyBoard from './components/MyBoard.vue';
-// import Youtube from './components/Youtube.vue'; // Importa o componente Youtube
-
-export default {
-  name: 'App',
-  components: {
-    MyBoard,
-    // Youtube // Adiciona o componente Youtube ao componente App
+  </template>
+  
+  <style>
+  #app {
+    position: fixed;                    
+    top: 0;
+    left: 0;
+    width: 100vw;
+    height: 100vh;
+    max-width: 100%;
+    max-height: 100%;
+    object-fit: scale-down;
+    background-color: #0f110f;
   }
-};
-</script>
+
+  button 
+  {
+    position: relative;
+    bottom: -20px;
+    left: -210px;
+    width: 50px;
+    height: 30px;
+    background-color: #0f110f;
+    color: rgb(133, 86, 86);
+    border: 1px solid rgb(104, 67, 67);
+    border-radius: 3px;
+    font-size: 12px;
+    font-weight: bold;
+    cursor: pointer;
+  }                                                   
+  textarea {
+    position: relative;
+    bottom: 0px;
+    left: 0px;
+    width: 200px;
+    height: 125px;
+    background-color: #ffffff;
+    color: rgb(133, 86, 86);
+    border: 1px solid rgb(104, 67, 67);
+    border-radius: 3px;
+    font-size: 12px;
+    font-weight: bold;
+    cursor: pointer;
+  }
+  </style>
+
+  <script>
+  import MainChat from './components/MainChat.vue';
+  // import Youtube from './components/Youtube.vue'; 
+  import MyBoard from './components/MyBoard.vue';
+  export default {
+    name: 'App',
+    components: {
+      MyBoard, 
+      MainChat, 
+      // Youtube, 
+      
+    }
+  };
+
+  </script>
