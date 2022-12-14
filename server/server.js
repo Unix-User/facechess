@@ -65,6 +65,9 @@ io.on('connection', (socket) => {
             }
         }
     });
+    socket.on('chat-message', (msg) => {
+        io.emit('chat-message', msg);
+    });
     socket.on('disconnect', function () {
         for (let i = 0; i < rooms.length; i++) {
             if (rooms[i].pid[0] === playerId || rooms[i].pid[1] === playerId) {
