@@ -10,7 +10,7 @@
   import debounce from "lodash/debounce";
   import { Peer } from "peerjs"
   import { io } from "socket.io-client"
-  var socket = io.connect("https://localhost:8888")
+  var socket = io.connect("https://localhost:8080")
   
   export default {
 
