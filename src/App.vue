@@ -5,7 +5,7 @@
   </proprety>
         <MyBoard></MyBoard>
         <MainChat></MainChat>
-        <Youtube></Youtube><Youtube></Youtube>
+        <!-- <Youtube></Youtube><Youtube></Youtube> -->
 
     </div>
 
