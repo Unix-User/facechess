@@ -36,25 +36,26 @@
 
 
 <script>
+import io from 'socket.io-client'
+const url = process.env.VUE_APP_SERVER_URL + ':' + process.env.VUE_APP_SERVER_PORT
+
 export default {
     name: 'MainChat',
     data() {
         return {
             text: '',
+            socket: io(url),
             messages: []
         }
     },
     methods: {
-        // Send message do serve
-        // send message with socketio
-        // receive message with socketio
         receiveMessage(message) {
             this.messages.push(message)
         },
 
         sendMessage() {
             if (this.text.length > 0) {
-                this.$socket.emit('chat-message', this.text)
+                this.socket.emit('chat-message', this.text)
                 this.text = ''
             }
         },
@@ -62,7 +63,7 @@ export default {
 
     },
     mounted() {
-        this.$socket.on('chat-message', this.receiveMessage)
+        this.socket.on('chat-message', this.receiveMessage)
     },
 }
 
