@@ -10,12 +10,37 @@
                 </div>
             </div>
             <div id="chat-input">
-                <textarea v-model="text" placeholder="Chat aqui, mande uma mensagem" left="100"></textarea>
+                <textarea v-model="text" placeholder="Chat aqui, mande uma mensagem" left="100"
+                    @keyup.enter="sendMessage"></textarea>
             </div>
         </div>
     </div>
 </template>
 
+<script>
+export default {
+    name: 'MainChat',
+    props: {
+        messages: {
+            type: Array,
+            required: true
+        }
+    },
+    data() {
+        return {
+            text: ''
+        }
+    },
+    methods: {
+        sendMessage() {
+            this.$refs.myBoard.sendMessage(this.text);
+            this.text = '';
+        }
+
+    }
+
+}
+</script>
 
 <style>
 #Chat {
@@ -34,37 +59,3 @@
 }
 </style>
 
-
-<script>
-import io from 'socket.io-client'
-const url = process.env.VUE_APP_SERVER_URL + ':' + process.env.VUE_APP_SERVER_PORT
-
-export default {
-    name: 'MainChat',
-    data() {
-        return {
-            text: '',
-            socket: io(url),
-            messages: []
-        }
-    },
-    methods: {
-        receiveMessage(message) {
-            this.messages.push(message)
-        },
-
-        sendMessage() {
-            if (this.text.length > 0) {
-                this.socket.emit('chat-message', this.text)
-                this.text = ''
-            }
-        },
-
-
-    },
-    mounted() {
-        this.socket.on('chat-message', this.receiveMessage)
-    },
-}
-
-</script>

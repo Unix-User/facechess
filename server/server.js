@@ -52,7 +52,7 @@ io.on('connection', (socket) => {
         }
         rooms[roomId].players++;
         console.log('a player had conected to this room:' + roomId, rooms[roomId]);
-        socket.emit('room', roomId);
+        socket.emit('room', rooms[roomId]);
         socket.emit('player', {
             playerId,
             players: rooms[roomId].players,
