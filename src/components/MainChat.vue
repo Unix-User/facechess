@@ -10,7 +10,7 @@
                 </div>
             </div>
             <div id="chat-input">
-                <textarea v-model="text" placeholder="Chat aqui, mande uma mensagem" left="100"
+                <textarea v-model="text" placeholder="Chat sera recebido aqui" left="100"
                     @keyup.enter="sendMessage"></textarea>
             </div>
         </div>
@@ -59,3 +59,7 @@ export default {
 }
 </style>
 
+
+
+
+  
