@@ -1,6 +1,6 @@
 <template>
   <div class="status-bar">
-    <p>Status: {{ status }}</p>
+    <p style="color: red;">Status: {{ status }}</p>
   </div>
 </template>
 
@@ -13,10 +13,10 @@ export default {
       required: true,
     },
   },
-  data() {
-    return {
-      status: this.$parent.status,
-    }
-  }
+  computed: {
+        status() {
+            return this.$parent.status;
+        }
+    },
 };
 </script>
