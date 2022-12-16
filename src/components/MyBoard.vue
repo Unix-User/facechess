@@ -2,23 +2,6 @@
   <div id="myBoard"></div>
 </template>
 
-<style>
-#myBoard {
-  position: relative;
-  width: 100%;
-  height: auto;
-  max-width: 433px;
-  min-height: 190px;
-  background-color: #ffffff;
-  color: rgb(133, 86, 86);
-  border: 1px solid rgb(104, 67, 67);
-  border-radius: 3px;
-  font-size: 12px;
-  font-weight: bold;
-  cursor: pointer;
-}
-</style>
-
 <script>
 import { Chess } from 'chess.js'
 import Chessboard from "chessboardjs-vue3"
@@ -132,6 +115,5 @@ export default {
       socket.emit('send-message', message);
     });
   },
-
 }
 </script>
