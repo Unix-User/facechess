@@ -113,7 +113,7 @@ export default {
     this.board = Chessboard("myBoard", this.config);
     socket.emit("joined", this.room);
     socket.on("room", (data) => {
-      this.$emit("onRoomData", data);
+      this.emitter.emit('room', data);
     });
     socket.on("player", (data) => {
       console.log("Dados do jogador:", data);

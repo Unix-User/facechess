@@ -1,6 +1,6 @@
 <template>
   <div id="app">
-    <StatusBar :status="currentStatus"></StatusBar>
+    <StatusBar :emitter="emitter"></StatusBar>
     <MyBoard :emitter="emitter"></MyBoard>
     <MainChat :emitter="emitter"></MainChat>
   </div>
@@ -17,7 +17,7 @@ export default {
   data() {
     return {
       emitter: mitt(),
-      currentStatus: '',
+      status: '',
       messages: []
     }
   },
@@ -26,14 +26,12 @@ export default {
     MainChat,
     StatusBar
   },
-  methods: {
-    handleRoomData(data) {
-      this.currentStatus = data;
-    },
-  },
   mounted() {
     this.emitter.on('received-message', message => {
       this.messages.push(message);
+    });
+    this.emitter.on('room', data => {
+      this.status = data;
     });
   }
 };

@@ -8,9 +8,14 @@
 export default {
   name: 'StatusBar',
   props: {
-    status: {
-      type: String,
-      required: true
+    emitter: {
+      type: Object,
+      required: true,
+    },
+  },
+  data() {
+    return {
+      status: this.$parent.status,
     }
   }
 };
