@@ -68,8 +68,15 @@ io.on('connection', (socket) => {
             }
         }
     });
-    socket.on('chat-message', (msg) => {
-        io.emit('chat-message', msg);
+    socket.on('send-message', (msg) => {
+        console.log(msg)
+        for (let i = 0; i < rooms.length; i++) {
+            if (rooms[i].pid.includes(playerId)) {
+                let opponent = (rooms[i].pid[0] === playerId) ? rooms[i].pid[1] : rooms[i].pid[0];
+                socket.to(opponent).emit('chat-message', msg);
+            }
+        }
+        socket.emit('chat-message', msg);
     });
     socket.on('disconnect', function () {
         for (let i = 0; i < rooms.length; i++) {

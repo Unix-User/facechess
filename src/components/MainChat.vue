@@ -16,29 +16,32 @@
         </div>
     </div>
 </template>
-
+  
 <script>
 export default {
     name: 'MainChat',
     props: {
-        messages: {
-            type: Array,
-            required: true
-        }
+        emitter: {
+            type: Object,
+            required: true,
+        },
     },
     data() {
         return {
-            text: ''
+            text: '',
+        }
+    },
+    computed: {
+        messages() {
+            return this.$parent.messages;
         }
     },
     methods: {
         sendMessage() {
-            this.$refs.myBoard.sendMessage(this.text);
+            this.emitter.emit('send-message', this.text);
             this.text = '';
         }
-
     }
-
 }
 </script>
 

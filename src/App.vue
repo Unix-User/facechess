@@ -1,12 +1,8 @@
 <template>
   <div id="app">
-    <StatusBar v-bind:status="currentStatus"></StatusBar>
-    <MyBoard v-on:onRoomData="handleRoomData" v-on:onChatMsg="handleChatMsg"></MyBoard>
-    <MainChat v-bind:messages="messages"></MainChat>
-    <ul id="messages"></ul>
-    <form id="form" action="">
-      <input id="input" autocomplete="off" /><button>Enviar</button>
-    </form>
+    <StatusBar :status="currentStatus"></StatusBar>
+    <MyBoard :emitter="emitter"></MyBoard>
+    <MainChat :emitter="emitter"></MainChat>
   </div>
 </template>
 
@@ -14,33 +10,33 @@
 import MainChat from './components/MainChat.vue';
 import MyBoard from './components/MyBoard.vue';
 import StatusBar from './components/StatusBar.vue';
+import mitt from 'mitt';
 
 export default {
   name: 'App',
+  data() {
+    return {
+      emitter: mitt(),
+      currentStatus: '',
+      messages: []
+    }
+  },
   components: {
     MyBoard,
     MainChat,
     StatusBar
   },
-  data() {
-    return {
-      currentStatus: '',
-      messages: []
-    };
-  },
   methods: {
     handleRoomData(data) {
       this.currentStatus = data;
     },
-    handleChatMsg(data) {
-      this.messages.push(data);
-    },
-    handleSendMessage(data) {
-      this.messages.push({ text: data });
-    }
+  },
+  mounted() {
+    this.emitter.on('received-message', message => {
+      this.messages.push(message);
+    });
   }
 };
-
 </script>
 
 <style>
@@ -85,11 +81,7 @@ textarea {
   font-weight: bold;
   cursor: pointer;
 }
-</style>
----chat front
 
-
-<style>
 #body {
   margin: 0;
   padding-bottom: 3rem;

@@ -27,8 +27,12 @@ const url = process.env.VUE_APP_SERVER_URL + ':' + process.env.VUE_APP_SERVER_PO
 const socket = io(url);
 
 export default {
+  name: 'MyBoard',
   props: {
-    room: Object,
+    emitter: {
+      type: Object,
+      required: true,
+    },
   },
   data() {
     return {
@@ -119,9 +123,14 @@ export default {
       this.onReceivedMove(data.from, data.to);
       this.onSnapEnd();
     });
-    socket.on('chat-message', (data) => {
-      this.$emit('onChatMsg', data);
-    })
+    socket.on('chat-message', message => {
+      console.log(message)
+      this.emitter.emit('received-message', message);
+    });
+    this.emitter.on('send-message', message => {
+      console.log(message)
+      socket.emit('send-message', message);
+    });
   },
 
 }
