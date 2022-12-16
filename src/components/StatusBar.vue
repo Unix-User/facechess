@@ -1,6 +1,6 @@
 <template>
   <div class="status-bar">
-    <p style="color: white;">Status: {{ status }}</p>
+    <p>Status: {{ status }}</p>
   </div>
 </template>
 
