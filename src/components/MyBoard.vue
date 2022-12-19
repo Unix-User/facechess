@@ -99,7 +99,7 @@ export default {
       this.emitter.emit('room', data);
     });
     socket.on("player", (data) => {
-      console.log("Dados do jogador:", data);
+      this.emitter.emit('player', data);
     });
     socket.on("move-received", (data) => {
       console.log(data);
@@ -117,3 +117,10 @@ export default {
   },
 }
 </script>
+
+<style>
+#myBoard {
+  width: 400px;
+  position: absolute;
+}
+</style>
