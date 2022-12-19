@@ -2,6 +2,20 @@
   <div id="myBoard"></div>
 </template>
 
+<style>
+#myBoard {
+  width: 100%;
+  height: auto;
+  border-color: rgb(97, 57, 57);
+  border-style: solid;
+  border-width: 1px;
+  border-color: yellow;
+  position: fixed;
+  position: relative;
+
+
+}
+</style>
 <script>
 import { Chess } from 'chess.js'
 import Chessboard from "chessboardjs-vue3"
@@ -10,7 +24,7 @@ const url = process.env.VUE_APP_SERVER_URL + ':' + process.env.VUE_APP_SERVER_PO
 const socket = io(url);
 
 export default {
-  name: 'MyBoard',
+  name: 'myBoard',
   props: {
     emitter: {
       type: Object,

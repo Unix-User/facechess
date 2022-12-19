@@ -14,6 +14,27 @@
   </div>
 </template>
 
+<style>
+#app {
+  width: 100%;
+  height: auto;
+  max-width: 360px;
+  min-width: 300px;
+  max-height: 423px;
+  min-height: 323px;
+  left: -4px;
+  top: -8px;
+  background-color: rgb(0, 0, 0);
+  position: fixed;
+  position: relative;
+  border-radius: 7.5px;
+}
+
+</style>
+
+
+
+
 <script>
 import MainChat from './components/MainChat.vue';
 import MyBoard from './components/MyBoard.vue';
