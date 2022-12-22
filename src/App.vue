@@ -51,6 +51,7 @@ export default {
       messages: []
     }
   },
+  compatConfig: { MODE: 2 },
   components: {
     MyBoard,
     MainChat,
