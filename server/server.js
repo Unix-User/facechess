@@ -2,14 +2,21 @@ const { Chess } = require('chess.js');
 const app = require('express')();
 require('dotenv').config()
 const serverUrl = process.env.VUE_APP_SERVER_URL + ':' + process.env.VUE_APP_SERVER_PORT
-const clientUrl = process.env.VUE_APP_CLIENT_URL + ':' + process.env.VUE_APP_CLIENT_PORT
-const server = require('http').Server()
-if (!process.env.VUE_APP_SERVER_URL == 'http://localhost') {
-    const fs = require('fs');
-    const server = require('https').Server({
+if (process.env.VUE_APP_MODE == 'prod') {
+    console.log('production mode')
+    const port = (process.env.VUE_APP_CLIENT_PORT == '80') ? '' : ':' + process.env.VUE_APP_CLIENT_PORT
+    var clientUrl = process.env.VUE_APP_CLIENT_URL + port
+    var fs = require('fs');
+    var server = require('https').Server({
         key: fs.readFileSync(process.env.VUE_APP_KEY),
         cert: fs.readFileSync(process.env.VUE_APP_CERTIFICATE)
     });
+}
+
+if (process.env.VUE_APP_MODE == 'dev') {
+    console.log('development mode')
+    var clientUrl = process.env.VUE_APP_CLIENT_URL + ':' + process.env.VUE_APP_CLIENT_PORT;
+    var server = require('http').Server()
 }
 
 const io = require('socket.io')(server, {
