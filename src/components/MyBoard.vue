@@ -2,20 +2,6 @@
   <div id="myBoard"></div>
 </template>
 
-<style>
-#myBoard {
-  width: 100%;
-  height: auto;
-  border-color: rgb(97, 57, 57);
-  border-style: solid;
-  border-width: 1px;
-  border-color: yellow;
-  position: fixed;
-  position: relative;
-
-
-}
-</style>
 <script>
 import { Chess } from 'chess.js'
 import Chessboard from "chessboardjs-vue3"
@@ -131,10 +117,3 @@ export default {
   },
 }
 </script>
-
-<style>
-#myBoard {
-  width: 400px;
-  position: absolute;
-}
-</style>

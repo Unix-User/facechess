@@ -1,39 +1,18 @@
 <template>
-  <div id="app" class="container">
-    <div class="row">
-      <div class="row-top">
+  <b-container class="bv-example-row">
+    <b-row>
         <StatusBar :emitter="emitter"></StatusBar>
-      </div>
-      <div class="row-middle">
+    </b-row>
+    <b-row align-v="center">
+      <b-col>
         <MyBoard :emitter="emitter"></MyBoard>
-      </div>
-      <div class="row-botton">
+      </b-col>
+      <b-col>
         <MainChat :emitter="emitter"></MainChat>
-      </div>
-    </div>
-  </div>
+      </b-col>
+    </b-row>
+  </b-container>
 </template>
-
-<style>
-#app {
-  width: 100%;
-  height: auto;
-  max-width: 360px;
-  min-width: 300px;
-  max-height: 423px;
-  min-height: 323px;
-  left: -4px;
-  top: -8px;
-  background-color: rgb(0, 0, 0);
-  position: fixed;
-  position: relative;
-  border-radius: 7.5px;
-}
-
-</style>
-
-
-
 
 <script>
 import MainChat from './components/MainChat.vue';
@@ -70,26 +49,3 @@ export default {
   }
 };
 </script>
-
-
-<style>
-.row-top {
-  width: 100%;
-  height: 50px;
-  background-color: #000;
-  color: #fff;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-}
-
-
-.row-bottom {
-  width: 100%;
-  height: 50%;
-  background-color: #fff;
-  display: flex;
-  align-items: flex-start;
-  justify-content: flex-start;
-}
-</style>

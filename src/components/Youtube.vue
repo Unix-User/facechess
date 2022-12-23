@@ -1,58 +1,49 @@
-  <template>
-    <div id="Youtube">
-        <YoutubeVue3 ref="youtube" :video_id="play.video_id" :loop="play.loop" @ended="onEnded" @paused="onPaused" @played="onPlayed" width="50" height="50" />
-        <div>
+<template>
+  <div id="Youtube">
+    <YoutubeVue3 ref="youtube" :video_id="play.video_id" :loop="play.loop" @ended="onEnded" @paused="onPaused"
+      @played="onPlayed" width="50" height="50" />
+    <div>
 
-        </div>
-      </div>
-  </template>
+    </div>
+  </div>
+</template>
 
-  <style>
-  #Youtube {
-    position: relative;
-    width: 0px;
-    height: 0x;
-    bottom: 0px;
-    right: 0px;
-  }
-  </style>
+<script>
+import { YoutubeVue3 } from 'youtube-vue3'
 
-    <script>
-    import { YoutubeVue3 } from 'youtube-vue3'
-    
-    export default {
-      name: 'App',
-      data() {
-        return {
-          temp: { video_id:"wSYoT_ptT00", loop:1 },
-          play : { video_id:"wSYoT_ptT00", loop:1 }
-        }
-      },
-      components: {
-        YoutubeVue3
-      },
-      methods: {
-        applyConfig() {
-          this.play = Object.assign(this.play, this.temp)
-        },
-        playCurrentVideo() {
-          this.$refs.youtube.player.playVideo();
-        },
-        stopCurrentVideo() {
-          this.$refs.youtube.player.stopVideo();
-        },
-        pauseCurrentVideo() {
-          this.$refs.youtube.player.pauseVideo();
-        },
-        onEnded() {
-          console.log("## OnEnded")
-        },
-        onPaused() {
-          console.log("## OnPaused")
-        },
-        onPlayed() {
-          console.log("## OnPlayed")
-        }
-      }
+export default {
+  name: 'App',
+  data() {
+    return {
+      temp: { video_id: "wSYoT_ptT00", loop: 1 },
+      play: { video_id: "wSYoT_ptT00", loop: 1 }
     }
-    </script>
+  },
+  components: {
+    YoutubeVue3
+  },
+  methods: {
+    applyConfig() {
+      this.play = Object.assign(this.play, this.temp)
+    },
+    playCurrentVideo() {
+      this.$refs.youtube.player.playVideo();
+    },
+    stopCurrentVideo() {
+      this.$refs.youtube.player.stopVideo();
+    },
+    pauseCurrentVideo() {
+      this.$refs.youtube.player.pauseVideo();
+    },
+    onEnded() {
+      console.log("## OnEnded")
+    },
+    onPaused() {
+      console.log("## OnPaused")
+    },
+    onPlayed() {
+      console.log("## OnPlayed")
+    }
+  }
+}
+</script>
