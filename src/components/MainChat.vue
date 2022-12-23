@@ -1,5 +1,6 @@
 <template>
     <div id="MainChat">
+        <input type="text" v-model="name" ref="input" />
         <div id="chat">
             <div id="chat-messages">
                 <div v-for="message in messages" :key="message.id" class="message">
@@ -26,6 +27,7 @@ export default {
     },
     data() {
         return {
+            name: '',
             text: '',
         }
     },
@@ -36,7 +38,7 @@ export default {
     },
     methods: {
         sendMessage() {
-            this.emitter.emit('send-message', this.text);
+            this.emitter.emit('send-message', this.name + ':' + this.text);
             this.text = '';
             this.$refs.input.scrollIntoView({ behavior: 'smooth' });
         }
