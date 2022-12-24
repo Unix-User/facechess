@@ -1,16 +1,19 @@
 <template>
   <b-container class="bv-example-row">
-    <b-row>
+    <b-row >
         <StatusBar :emitter="emitter"></StatusBar>
     </b-row>
-    <b-row align-v="center">
-      <b-col>
+    <b-row >
+      <b-col >
         <MyBoard :emitter="emitter"></MyBoard>
       </b-col>
+    </b-row>
+    <b-row align-v="left">
       <b-col>
         <MainChat :emitter="emitter"></MainChat>
       </b-col>
     </b-row>
+
   </b-container>
 </template>
 

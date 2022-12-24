@@ -18,6 +18,8 @@
 </template>
 
 <script>
+import { BFormInput } from 'bootstrap-vue';
+
 export default {
     name: 'MainChat',
     props: {
@@ -25,6 +27,9 @@ export default {
             type: Object,
             required: true,
         },
+    },
+    components: {
+        BFormInput,
     },
     data() {
         return {
@@ -39,9 +44,16 @@ export default {
     },
     methods: {
         sendMessage() {
-            this.emitter.emit('send-message', this.name + ':' + this.text);
+            this.emitter.emit('send-message', this.name + ': ' + this.text);
             this.text = '';
         }
-    }
-}
+    },
+};
 </script>
+
+<style>
+#name {
+    outline-color: rgb(109, 30, 30);
+    font-size: 20px;
+}
+</style>
