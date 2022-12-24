@@ -1,19 +1,20 @@
 <template>
-    <div id="MainChat">
-        <input type="text" v-model="name" ref="input" />
-        <div id="chat">
-            <div id="chat-messages">
-                <div v-for="message in messages" :key="message.id" class="message">
-                    <div class="message-content">
-                        <div class="message-text">{{ message }}</div>
-                    </div>
-                </div>
+    <b-container class="bv-example-row bv-example-row-flex-cols">
+        <b-row align-v="stretch">
+            <div v-for="message in messages" :key="message.id" class="message">
+                {{ message }}
             </div>
-            <div id="chat-input">
-                <input type="text" v-model="text" @keyup.enter="sendMessage" ref="input" />
-            </div>
-        </div>
-    </div>
+        </b-row>
+        <b-row align-v="end">
+            <b-input-group>
+                <b-form-input type="text" v-model="name"></b-form-input>
+                <b-form-input type="text" v-model="text" @keyup.enter="sendMessage" ref="input"></b-form-input>
+                <b-input-group-append>
+                    <b-button variant="outline-secondary">Enviar</b-button>
+                </b-input-group-append>
+            </b-input-group>
+        </b-row>
+    </b-container>
 </template>
 
 <script>
@@ -40,11 +41,7 @@ export default {
         sendMessage() {
             this.emitter.emit('send-message', this.name + ':' + this.text);
             this.text = '';
-            this.$refs.input.scrollIntoView({ behavior: 'smooth' });
         }
-    },
-    mounted() {
-        this.$refs.input.scrollIntoView({ behavior: 'smooth' });
     }
 }
 </script>
