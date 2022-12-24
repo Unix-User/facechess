@@ -1,5 +1,9 @@
 <template>
-  <div id="myBoard"></div>
+      <b-container class="myBoard" fluid>
+
+</b-container>
+<div id="myBoard"></div>
+
 </template>
 
 <script>
