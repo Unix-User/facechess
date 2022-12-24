@@ -1,12 +1,15 @@
 <template>
-  <div class="status-bar">
-    <div class="alert alert-warning">
-      Bem vindo a sala  {{ player.roomId }}, jogadores online: {{ status.players }} <br />
-    </div>
-  </div>
+  <!-- player.roomId  ||  status.players -->
+  <b-alert :show="dismissCountDown" dismissible variant="warning" @dismissed="dismissCountDown = 0"
+    @dismiss-count-down="countDownChanged">
+    <p>This alert will dismiss after {{ dismissCountDown }} seconds...</p>
+    <b-progress variant="warning" :max="dismissSecs" :value="dismissCountDown" height="4px"></b-progress>
+  </b-alert>
 </template>
 
 <script>
+import { BAlert, BProgress } from 'bootstrap-vue';
+
 export default {
   name: 'StatusBar',
   props: {
@@ -25,5 +28,24 @@ export default {
       return this.$parent.player;
     }
   },
+  data() {
+    return {
+      dismissSecs: 10,
+      dismissCountDown: 0,
+      showDismissibleAlert: false
+    }
+  },
+  components: {
+    BAlert,
+    BProgress,
+  },
+  methods: {
+    countDownChanged(dismissCountDown) {
+      this.dismissCountDown = dismissCountDown
+    },
+    showAlert() {
+      this.dismissCountDown = this.dismissSecs
+    }
+  }
 };
 </script>
