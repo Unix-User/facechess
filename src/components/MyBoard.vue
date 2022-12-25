@@ -6,6 +6,7 @@
 import { Chess } from 'chess.js'
 import Chessboard from "chessboardjs-vue3"
 import io from 'socket.io-client'
+
 const url = process.env.VUE_APP_SERVER_URL + ':' + process.env.VUE_APP_SERVER_PORT
 const socket = io(url);
 
@@ -21,12 +22,18 @@ export default {
     return {
       board: null,
       game: new Chess(),
+      whiteSquareGrey: '#a9a9a9',
+      blackSquareGrey: '#696969',
       config: {
         draggable: true,
         position: "start",
-        onDragStart: this.onDragStart,
-        onDrop: this.onDrop,
+        onDragStart: (source, piece, position, orientation) => this.onDragStart(source, piece, position, orientation),
+        onDrop: (source, target, piece, newPos, oldPos, orientation) => this.onDrop(source, target, piece, newPos, oldPos, orientation),
+        onMouseoutSquare: (square, piece) => this.onMouseoutSquare(square, piece),
+        onMouseoverSquare: (square, piece) => this.onMouseoverSquare(square, piece),
+        onSnapEnd: () => this.onSnapEnd()
       }
+
     };
   },
   methods: {
@@ -84,12 +91,40 @@ export default {
         return "snapback";
       }
     },
-    onSnapEnd() {
-      this.board.position(this.game.fen());
-    },
     sendMessage(message) {
       console.log(message)
       this.socket.emit('send-message', message);
+    },
+    removeGreySquares() {
+      const squares = document.querySelectorAll('.square-55d63');
+      squares.forEach(square => square.style.background = '');
+    },
+    greySquare(square) {
+      const $square = document.querySelector('.square-' + square);
+      let background = this.whiteSquareGrey;
+      if ($square.classList.contains('black-3c85d')) {
+        background = this.blackSquareGrey;
+      }
+      $square.style.background = background;
+    },
+    // eslint-disable-next-line
+    onMouseoverSquare(square, piece) {
+      var moves = this.game.moves({
+        square: square,
+        verbose: true
+      })
+      if (moves.length === 0) return
+      this.greySquare(square)
+      for (var i = 0; i < moves.length; i++) {
+        this.greySquare(moves[i].to)
+      }
+    },
+    // eslint-disable-next-line
+    onMouseoutSquare(square, piece) {
+      this.removeGreySquares()
+    },
+    onSnapEnd() {
+      this.board.position(this.game.fen());
     }
   },
   mounted() {
