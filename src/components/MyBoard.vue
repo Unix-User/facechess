@@ -134,6 +134,8 @@ export default {
     },
     clearBoard() {
       this.board.start();
+      this.game.clear()
+      this.game.reset()
     }
   },
   mounted() {
@@ -159,8 +161,8 @@ export default {
       this.emitter.emit('show-message', { 'message': 'Oponente saiu da sala', 'player': this.opponent });
       this.emitter.emit('opponent', '');
       this.opponent = null;
-      this.clearBoard();
-      alert('Oponente saiu da sala')
+      alert('Oponente saiu da sala, atualize seu navegador!')
+      this.clearBoard()
     });
     socket.on("move-received", (data) => {
       console.log(data);
