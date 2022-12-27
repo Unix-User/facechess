@@ -11,11 +11,11 @@
                 </template>
             </template>
             <b-card-body>
-                <b-row align-v="stretch">
+                <b-row align-v="stretch" style="max-height: 400px" class="overflow-auto">
                     <b-container v-for="message in messages" :key="message.id" class="message">
-                        <b-card>
+                        <b-card v-bind:img-src="message.player && message.player.color === 'w' ? '/wikipedia/wK.png' : '/wikipedia/bK.png'" img-alt="Card image" img-right>
                             <b-card-text>
-                                {{ message }}
+                                {{ message.message }}
                             </b-card-text>
                         </b-card>
                         <br />
@@ -37,7 +37,7 @@
 </template>
 
 <script>
-import { BContainer, BFormInput, BInputGroupAppend, BInputGroup, BRow, BButton, BCard, BCardBody } from 'bootstrap-vue';
+import { BContainer, BFormInput, BInputGroupAppend, BInputGroup, BRow, BButton, BCard, BCardBody, BCardText } from 'bootstrap-vue';
 
 export default {
     name: 'MainChat',
@@ -54,7 +54,7 @@ export default {
         BInputGroup,
         BRow,
         BButton,
-        BCard, BCardBody
+        BCard, BCardBody, BCardText,
     },
     data() {
         return {
@@ -65,6 +65,7 @@ export default {
     },
     computed: {
         messages() {
+            console.log(this.$parent.messages)
             return this.$parent.messages;
         }
     },

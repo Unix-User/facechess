@@ -35,7 +35,7 @@ console.log('Server is running on: ' + serverUrl);
 
 io.on('connection', (socket) => {
     let playerId = socket.id;
-    socket.on('joined', function (roomId) {
+    socket.on('join', function (roomId) {
         let color;
         let found = false;
         for (let i = 0; i < rooms.length; i++) {
@@ -59,10 +59,18 @@ io.on('connection', (socket) => {
         }
         rooms[roomId].players++;
         console.log('a player had conected to this room:' + roomId, rooms[roomId]);
+        // envia dados do jogador para oponente
         if (rooms[roomId].pid.includes(playerId)) {
             let opponent = (rooms[roomId].pid[0] === playerId) ? rooms[roomId].pid[1] : rooms[roomId].pid[0];
             socket.to(opponent).emit('room', rooms[roomId]);
+            socket.to(opponent).emit('opponent', {
+                playerId,
+                players: rooms[roomId].players,
+                color,
+                roomId
+            });
         }
+        // envia dados do jogador para jogador
         socket.emit('room', rooms[roomId]);
         socket.emit('player', {
             playerId,
@@ -70,6 +78,16 @@ io.on('connection', (socket) => {
             color,
             roomId
         });
+    });
+    socket.on('joined', function (data) {
+        for (let i = 0; i < rooms.length; i++) {
+            if (rooms[i].pid.includes(data.playerId)) {
+                let opponent = (rooms[i].pid[0] === data.playerId) ? rooms[i].pid[1] : rooms[i].pid[0];
+                
+                socket.to(opponent).emit('opponent', data);
+            }
+        }
+        
     });
     socket.on('move', function (move) {
         for (let i = 0; i < rooms.length; i++) {
@@ -84,10 +102,10 @@ io.on('connection', (socket) => {
         for (let i = 0; i < rooms.length; i++) {
             if (rooms[i].pid.includes(playerId)) {
                 let opponent = (rooms[i].pid[0] === playerId) ? rooms[i].pid[1] : rooms[i].pid[0];
-                socket.to(opponent).emit('chat-message', msg);
+                socket.to(opponent).emit('received-message', msg);
             }
         }
-        socket.emit('chat-message', msg);
+        socket.emit('message-sent', msg);
     });
     socket.on('disconnect', function () {
         for (let i = 0; i < rooms.length; i++) {
@@ -96,6 +114,11 @@ io.on('connection', (socket) => {
                 if (rooms[i].players === 0) {
                     rooms.splice(i, 1);
                 } else {
+                    if (rooms[i].pid.includes(playerId)) {
+                        let opponent = (rooms[i].pid[0] === playerId) ? rooms[i].pid[1] : rooms[i].pid[0];
+                        socket.to(opponent).emit('room', rooms[i]);
+                        socket.to(opponent).emit('disconnected', playerId)
+                    }
                     rooms[i].pid[0] === playerId ? rooms[i].pid[0] = null : rooms[i].pid[1] = null;
                 }
                 (rooms[i]) ? console.log('a player had disconected from room:' + i, rooms[i]) : console.log('last player disconected there is no rooms now');

@@ -20,6 +20,8 @@ export default {
   },
   data() {
     return {
+      player: null,
+      opponent: null,
       board: null,
       game: new Chess(),
       whiteSquareGrey: '#a9a9a9',
@@ -47,6 +49,10 @@ export default {
       }
     },
     onDrop(source, target) {
+      if (this.game.turn() !== this.player.color) {
+        console.log('invalid move:', 'player color:' + this.player.color, 'turn color:' + this.game.turn())
+        return "snapback";
+      }
       var piece = this.game.get(source);
       if (piece && piece.type === "p" && (target[1] === "8" || target[1] === "1")) {
         var move = this.game.move({
@@ -125,28 +131,49 @@ export default {
     },
     onSnapEnd() {
       this.board.position(this.game.fen());
+    },
+    clearBoard() {
+      this.board.start();
     }
   },
   mounted() {
     this.board = Chessboard("myBoard", this.config);
-    socket.emit("joined", this.room);
+    socket.emit("join", this.room);
     socket.on("room", (data) => {
       this.emitter.emit('room', data);
     });
     socket.on("player", (data) => {
       this.emitter.emit('player', data);
+      this.emitter.emit('show-message', { 'message': 'Voce entrou na sala, sua cor é:', 'player': data });
+      this.player = this.$parent.player
+    });
+    socket.on("opponent", (data) => {
+      if (this.opponent === null) {
+        this.emitter.emit('opponent', data);
+        this.emitter.emit('show-message', { 'message': 'Oponente entrou na sala, a cor dele é:', 'player': data });
+        this.opponent = this.$parent.opponent
+        socket.emit('joined', this.player);
+      }
+    });
+    socket.on('disconnected', () => {
+      this.emitter.emit('show-message', { 'message': 'Oponente saiu da sala', 'player': this.opponent });
+      this.emitter.emit('opponent', '');
+      this.opponent = null;
+      this.clearBoard();
+      alert('Oponente saiu da sala')
     });
     socket.on("move-received", (data) => {
       console.log(data);
       this.onReceivedMove(data.from, data.to);
       this.onSnapEnd();
     });
-    socket.on('chat-message', message => {
-      console.log(message)
-      this.emitter.emit('received-message', message);
+    socket.on('received-message', message => {
+      this.emitter.emit('show-message', { 'message': message, 'player': this.opponent });
+    });
+    socket.on('message-sent', message => {
+      this.emitter.emit('show-message', { 'message': message, 'player': this.player });
     });
     this.emitter.on('send-message', message => {
-      console.log(message)
       socket.emit('send-message', message);
     });
   },

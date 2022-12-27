@@ -47,6 +47,7 @@ export default {
       emitter: mitt(),
       status: '',
       player: '',
+      opponent: '',
       messages: []
     }
   },
@@ -68,14 +69,17 @@ export default {
     StatusBar
   },
   mounted() {
-    this.emitter.on('received-message', message => {
-      this.messages.push(message);
+    this.emitter.on('show-message', (data) => {
+      this.messages.push(data);
     });
     this.emitter.on('room', data => {
       this.status = data;
     });
     this.emitter.on('player', data => {
       this.player = data;
+    });
+    this.emitter.on('opponent', data => {
+      this.opponent = data;
     });
   }
 };
