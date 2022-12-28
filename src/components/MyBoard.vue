@@ -41,16 +41,19 @@ export default {
   methods: {
     // eslint-disable-next-line
     onDragStart(source, piece, position, orientation) {
-      if (this.game.isGameOver())
+      if (this.game.isGameOver()) {
+        this.emitter.emit('status', { 'variant': 'Alert', 'message': 'Esse jogo acabou' });
         return false;
+      }
       if ((this.game.turn() === "w" && piece.charAt(0) === "b") ||
         (this.game.turn() === "b" && piece.charAt(0) === "w")) {
+        this.emitter.emit('status', { 'variant': 'warning', 'message': (this.game.turn() === "w") ? 'Agora é o turno das brancas' : 'Agora é o turno das pretas' });
         return false;
       }
     },
     onDrop(source, target) {
       if (this.game.turn() !== this.player.color) {
-        console.log('invalid move:', 'player color:' + this.player.color, 'turn color:' + this.game.turn())
+        this.emitter.emit('status', { 'variant': 'warning', 'message': (this.game.turn() === "w") ? 'Aguarde o turno das brancas terminar' : 'Aguarde o turno das pretas terminar' });
         return "snapback";
       }
       var piece = this.game.get(source);
@@ -129,6 +132,19 @@ export default {
     onMouseoutSquare(square, piece) {
       this.removeGreySquares()
     },
+    updateStatus() {
+      if (this.game.isCheckmate()) {
+        this.emitter.emit('status', { 'variant': 'danger', 'message': 'Game over, checkmate.' });
+      }
+      else if (this.game.isDraw()) {
+        this.emitter.emit('status', { 'variant': 'danger', 'message': 'Game over, drawn position.' });
+      }
+      else {
+        if (this.game.inCheck()) {
+          this.emitter.emit('status', { 'variant': 'warning', 'message': 'Check.' });
+        }
+      }
+    },
     onSnapEnd() {
       this.board.position(this.game.fen());
     },
@@ -146,28 +162,28 @@ export default {
     });
     socket.on("player", (data) => {
       this.emitter.emit('player', data);
-      this.emitter.emit('show-message', { 'message': 'Voce entrou na sala, sua cor é:', 'player': data });
+      this.emitter.emit('status', { 'variant': 'info', 'message': (data.color === 'w') ? 'Voce entrou na sala com a cor Branca ' : 'Voce entrou na sala com a cor Preta' });
       this.player = this.$parent.player
     });
     socket.on("opponent", (data) => {
       if (this.opponent === null) {
         this.emitter.emit('opponent', data);
-        this.emitter.emit('show-message', { 'message': 'Oponente entrou na sala, a cor dele é:', 'player': data });
+        this.emitter.emit('status', { 'variant': 'info', 'message': (data.color === 'w') ? 'Oponente entrou na sala com a cor Branca ' : 'Voce entrou na sala com a cor Preta' });
         this.opponent = this.$parent.opponent
         socket.emit('joined', this.player);
       }
     });
     socket.on('disconnected', () => {
-      this.emitter.emit('show-message', { 'message': 'Oponente saiu da sala', 'player': this.opponent });
+      this.emitter.emit('status', { 'variant': 'danger', 'message': 'Oponente saiu da sala!' });
       this.emitter.emit('opponent', '');
       this.opponent = null;
-      alert('Oponente saiu da sala, atualize seu navegador!')
       this.clearBoard()
     });
     socket.on("move-received", (data) => {
       console.log(data);
       this.onReceivedMove(data.from, data.to);
       this.onSnapEnd();
+      this.updateStatus();
     });
     socket.on('received-message', message => {
       this.emitter.emit('show-message', { 'message': message, 'player': this.opponent });

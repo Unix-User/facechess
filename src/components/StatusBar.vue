@@ -1,9 +1,9 @@
 <template>
   <!-- player.roomId  ||  status.players -->
-  <b-alert :show="dismissCountDown" dismissible variant="warning" @dismissed="dismissCountDown = 0"
+  <b-alert :show="dismissCountDown" v-bind:variant="status.variant" @dismissed="dismissCountDown = 0"
     @dismiss-count-down="countDownChanged">
-    <p>This alert will dismiss after {{ dismissCountDown }} seconds...</p>
-    <b-progress variant="warning" :max="dismissSecs" :value="dismissCountDown" height="4px"></b-progress>
+    <p>{{ status.message }} {{ dismissCountDown }}</p>
+    <b-progress v-bind:variant="status.variant" :max="dismissSecs" :value="dismissCountDown" height="4px"></b-progress>
   </b-alert>
 </template>
 
@@ -20,17 +20,15 @@ export default {
   },
   computed: {
     status() {
-      console.log(this.$parent.status);
       return this.$parent.status;
     },
     player() {
-      console.log(this.$parent.player);
       return this.$parent.player;
     }
   },
   data() {
     return {
-      dismissSecs: 10,
+      dismissSecs: 4,
       dismissCountDown: 0,
       showDismissibleAlert: false
     }
@@ -38,6 +36,13 @@ export default {
   components: {
     BAlert,
     BProgress,
+  },
+  watch: {
+    status: {
+      handler() {
+        this.showAlert();
+      }
+    }
   },
   methods: {
     countDownChanged(dismissCountDown) {

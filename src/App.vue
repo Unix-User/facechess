@@ -11,7 +11,7 @@
       <b-collapse id="nav-collapse" is-nav>
         <b-navbar-nav class="ml-auto">
           <b-nav-item href="#" disabled>Sala: {{ player.roomId }}</b-nav-item>
-          <b-nav-item href="#" disabled>Online: {{ status.players }}</b-nav-item>
+          <b-nav-item href="#" disabled>Online: {{ room.players }}</b-nav-item>
           <b-nav-item-dropdown text="Desenvolvedores" right>
             <b-dropdown-item href="https://github.com/Unix-User">Weverton</b-dropdown-item>
             <b-dropdown-item href="https://github.com/MestreWilll">Will</b-dropdown-item>
@@ -45,6 +45,7 @@ export default {
   data() {
     return {
       emitter: mitt(),
+      room: '',
       status: '',
       player: '',
       opponent: '',
@@ -73,6 +74,9 @@ export default {
       this.messages.push(data);
     });
     this.emitter.on('room', data => {
+      this.room = data;
+    });
+    this.emitter.on('status', data => {
       this.status = data;
     });
     this.emitter.on('player', data => {
