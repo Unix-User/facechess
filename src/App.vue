@@ -20,6 +20,7 @@
       </b-collapse>
     </b-navbar>
   </div>
+  <VideoStream :emitter="emitter" :peer="peer"></VideoStream>
   <b-container class="bv-example-row">
     <b-row align-v="stretch">
       <b-col>
@@ -38,6 +39,7 @@ import { BNavbar, BNavbarBrand, BNavbarNav, BNavItem, BNavbarToggle, BNavItemDro
 import MainChat from './components/MainChat.vue';
 import MyBoard from './components/MyBoard.vue';
 import StatusBar from './components/StatusBar.vue';
+import VideoStream from './components/VideoStream.vue';
 import mitt from 'mitt';
 
 export default {
@@ -45,6 +47,7 @@ export default {
   data() {
     return {
       emitter: mitt(),
+      peer: '',
       room: '',
       status: '',
       player: '',
@@ -67,6 +70,7 @@ export default {
     BDropdownItem,
     MyBoard,
     MainChat,
+    VideoStream,
     StatusBar
   },
   mounted() {
@@ -84,6 +88,9 @@ export default {
     });
     this.emitter.on('opponent', data => {
       this.opponent = data;
+    });
+    this.emitter.on('peer', peer => {
+      this.peer = peer;
     });
   }
 };
