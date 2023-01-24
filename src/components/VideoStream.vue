@@ -1,30 +1,72 @@
 <template>
-    <div :style="videoGrid" id="video-grid">
-        <div v-for="(video, index) in videoList" :key="index" class="video-container">
-            <video :srcObject.prop="video.stream" autoplay :muted="video.id == ownId" :id="'video-' + video.id"></video>
+    <div id="overlay" :style="{ width: '100vw', height: '100vh' }">
+        <div v-for="(video, index) in videoList" :key="index" class="draggable" @mousedown="startDragging"
+            @mousemove="drag" @mouseup="stopDragging">
+            <div class="video-container">
+                <video type="video" :srcObject.prop="video.stream" autoplay :muted="video.id == ownId"
+                    :id="'video-' + video.id"></video>
+            </div>
         </div>
     </div>
 </template>
   
+<style>
+#overlay {
+    position: absolute;
+    overflow: hidden;
+    z-index: 999;
+}
+
+.draggable {
+    position: absolute;
+}
+
+.video-container {
+    cursor: move;
+    user-select: none;
+    -webkit-user-select: none;
+}
+
+.video-container video {
+    width: 250px;
+    height: 250px;
+}
+</style>
+
 <script>
-import debounce from "lodash/debounce";
 import { Peer } from "peerjs"
-import { io } from "socket.io-client"
-var socket = io.connect("https://localhost:8080")
 
 export default {
-
-    // layout: Layout,
+    name: 'VideoStream',
     props: {
         room: Object,
         url: Object,
+        peer: String,
+        emitter: {
+            type: Object,
+            required: true,
+        },
     },
     data() {
         return {
+            isDragging: false,
+            currentDraggedVideo: null,
             ownId: '',
             videoList: [],
             peers: {},
-            myPeer: new Peer(),
+            myPeer: new Peer(
+                {
+                    config: {
+                        'iceServers': [
+                            { url: process.env.VUE_APP_STUN_SERVER + ':' + process.env.VUE_APP_STUN_PORT },
+                            {
+                                url: process.env.VUE_APP_TURN_SERVER + ':' + process.env.VUE_APP_TURN_PORT,
+                                username: process.env.VUE_APP_TURN_USER,
+                                credential: process.env.VUE_APP_TURN_PASS
+                            }
+                        ]
+                    }
+                }),
             myStream: '',
             videoGrid: {
                 width: '',
@@ -34,72 +76,27 @@ export default {
         }
     },
     methods: {
-        recalculateLayout() {
-            const aspectRatio = 16 / 9;
-            const screenWidth = document.body.getBoundingClientRect().width;
-            const screenHeight = document.body.getBoundingClientRect().height;
-            const videoCount = document.getElementsByTagName("video").length;
-
-            function calculateLayout(
-                containerWidth,
-                containerHeight,
-                videoCount,
-                aspectRatio
-            ) {
-                let bestLayout = {
-                    area: 0,
-                    cols: 0,
-                    rows: 0,
-                    width: 0,
-                    height: 0
-                };
-
-                for (let cols = 1; cols <= videoCount; cols++) {
-                    const rows = Math.ceil(videoCount / cols);
-                    const hScale = containerWidth / (cols * aspectRatio);
-                    const vScale = containerHeight / rows;
-                    let width;
-                    let height;
-                    if (hScale <= vScale) {
-                        width = Math.floor(containerWidth / cols);
-                        height = Math.floor(width / aspectRatio);
-                    } else {
-                        height = Math.floor(containerHeight / rows);
-                        width = Math.floor(height * aspectRatio);
-                    }
-                    const area = width * height;
-                    if (area > bestLayout.area) {
-                        bestLayout = {
-                            area,
-                            width,
-                            height,
-                            rows,
-                            cols
-                        };
-                    }
-                }
-                return bestLayout;
-            }
-
-            const { width, height, cols } = calculateLayout(
-                screenWidth,
-                screenHeight,
-                videoCount,
-                aspectRatio
-            );
-
-            this.videoGrid.width = width + "px"
-            this.videoGrid.height = height + "px";
-            this.videoGrid.cols = cols + "";
+        startDragging(e) {
+            this.isDragging = true
+            this.currentDraggedVideo = e.currentTarget
         },
-
+        drag(e) {
+            if (!this.isDragging) return
+            const video = this.currentDraggedVideo
+            video.style.left = `${e.clientX - video.offsetWidth / 2}px`
+            video.style.top = `${e.clientY - video.offsetHeight / 2}px`
+        },
+        stopDragging() {
+            this.isDragging = false
+            this.currentDraggedVideo = null
+        },
         callUser(userId) {
             const call = this.myPeer.call(userId, this.myStream)
             this.handleStream(call)
         },
         handleStream(call) {
             call.on("stream", (remoteStream) => {
-                this.addYoutube(call.peer, remoteStream)
+                this.addVideoStream(call.peer, remoteStream)
             });
             call.on("error", (err) => {
                 alert(err)
@@ -110,25 +107,23 @@ export default {
                 this.videoList.splice(i, 1)
             });
             this.peers[call.peer] = call
-
         },
-        addYoutube(id, stream) {
+        addVideoStream(id, stream) {
             let i = this.videoList.map(video => video.id).indexOf(id)
             if (i == -1) {
                 this.videoList.push({ stream, id })
             }
-
         }
     },
-    umounted() {
-
+    mounted() {
         this.myPeer.on("open", (id) => {
             this.ownId = id
+            this.emitter.emit("peer", id);
             navigator.mediaDevices.getUserMedia(
                 { video: true, audio: true }
             ).then((stream) => {
                 this.myStream = stream
-                this.addYoutube(this.ownId, this.myStream)
+                this.addVideoStream(this.ownId, this.myStream)
                 this.myPeer.on("call", (call) => {
                     if (confirm(`Accept call from ${call.peer}?`)) {
                         call.answer(stream)
@@ -137,61 +132,23 @@ export default {
                         call.close()
                     }
                 })
-                socket.on('user-connected', userId => {
+                this.emitter.on('calling', userId => {
                     if (userId != this.ownId) {
                         this.callUser(userId)
                     }
                 })
-
-                socket.emit('join-room', this.room, this.ownId)
-                const debouncedRecalculateLayout = debounce(this.recalculateLayout, 50);
-                window.addEventListener("resize", debouncedRecalculateLayout);
-
+                this.emitter.emit('peer', { 'room': this.room, 'peer': this.ownId })
             })
-            socket.on('user-disconnected', userId => {
+            this.emitter.on('end', userId => {
                 if (this.peers[userId]) {
                     this.peers[userId].close()
                 }
             })
-
         })
-
-
     },
-    mounted() {
-        window.removeEventListener("resize",);
+    unmounted() {
         this.myStream.getTracks().forEach(function (track) { track.stop() })
         this.myPeer.disconnect()
     }
 }
 </script>
-  
-<style>
-/* video-gallery */
-body {
-    margin: 0;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    height: 100vh;
-    background-color: #3a6a3a;
-}
-
-#video-grid {
-    display: flex;
-    justify-content: center;
-    flex-wrap: wrap;
-    max-width: calc(var(--width) * var(--cols));
-}
-
-.video-container {
-    width: var(--width);
-    height: var(--height);
-    background-color: #3a3a3e;
-}
-
-video {
-    height: 100%;
-    width: 100%;
-}
-</style>

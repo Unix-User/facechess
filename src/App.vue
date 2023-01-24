@@ -1,4 +1,5 @@
 <template>
+  <VideoStream :emitter="emitter" :peer="peer"></VideoStream>
   <div>
     <b-navbar toggleable="lg" type="light" variant="light">
       <b-navbar-brand href="#">
@@ -20,7 +21,6 @@
       </b-collapse>
     </b-navbar>
   </div>
-  <VideoStream :emitter="emitter" :peer="peer"></VideoStream>
   <b-container class="bv-example-row">
     <b-row align-v="stretch">
       <b-col>

@@ -194,6 +194,9 @@ export default {
     this.emitter.on('send-message', message => {
       socket.emit('send-message', message);
     });
+    this.emitter.on('peer', data => {
+      socket.emit('peer', data);
+    });
   },
 }
 </script>

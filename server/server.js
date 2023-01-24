@@ -83,11 +83,11 @@ io.on('connection', (socket) => {
         for (let i = 0; i < rooms.length; i++) {
             if (rooms[i].pid.includes(data.playerId)) {
                 let opponent = (rooms[i].pid[0] === data.playerId) ? rooms[i].pid[1] : rooms[i].pid[0];
-                
+
                 socket.to(opponent).emit('opponent', data);
             }
         }
-        
+
     });
     socket.on('move', function (move) {
         for (let i = 0; i < rooms.length; i++) {
@@ -106,6 +106,15 @@ io.on('connection', (socket) => {
             }
         }
         socket.emit('message-sent', msg);
+    });
+    socket.on('peer', peer => {
+        for (let i = 0; i < rooms.length; i++) {
+            if (rooms[i].pid.includes(socket.id)) {
+                let opponent = (rooms[i].pid[0] === socket.id) ? rooms[i].pid[1] : rooms[i].pid[0];
+                socket.to(opponent).emit('peer', peer);
+                break;
+            }
+        }
     });
     socket.on('disconnect', function () {
         for (let i = 0; i < rooms.length; i++) {
