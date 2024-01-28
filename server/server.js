@@ -4,8 +4,15 @@ require('dotenv').config()
 const serverUrl = process.env.VUE_APP_SERVER_URL + ':' + process.env.VUE_APP_SERVER_PORT
 if (process.env.VUE_APP_MODE == 'prod') {
     console.log('production mode')
-    const port = (process.env.VUE_APP_CLIENT_PORT == '80') ? '' : ':' + process.env.VUE_APP_CLIENT_PORT
+    const port = (process.env.VUE_APP_CLIENT_PORT == '80') ? '' : ":" + process.env.VUE_APP_CLIENT_PORT
     var clientUrl = process.env.VUE_APP_CLIENT_URL + port
+    var cors = { 
+        cors: {
+        origin: ["http://localhost:8081"],
+        methods: ["GET", "POST"],
+        allowedHeaders: ['Content-Type', 'Authorization'],
+        credentials: false
+    }}
     var fs = require('fs');
     var server = require('https').Server({
         key: fs.readFileSync(process.env.VUE_APP_KEY),
@@ -15,18 +22,17 @@ if (process.env.VUE_APP_MODE == 'prod') {
 
 if (process.env.VUE_APP_MODE == 'dev') {
     console.log('development mode')
-    var clientUrl = process.env.VUE_APP_CLIENT_URL + ':' + process.env.VUE_APP_CLIENT_PORT;
-    var server = require('http').Server()
-}
-
-const io = require('socket.io')(server, {
-    cors: {
-        origin: clientUrl,
+    var clientUrl = process.env.VUE_APP_CLIENT_URL + ":" + process.env.VUE_APP_CLIENT_PORT;
+    var cors = { 
+        cors: {
+        origin: [clientUrl, "http://localhost:8081"],
         methods: ["GET", "POST"],
         allowedHeaders: ['Content-Type', 'Authorization'],
         credentials: false
-    }
-});
+    }}
+    var server = require('http').Server()
+}
+const io = require('socket.io')(server, cors);
 
 const game = new Chess();
 let rooms = [];

@@ -1,5 +1,6 @@
 <template>
     <b-container class="accordion" role="tablist" style="height: 100%;">
+        
         <b-card no-body class="mb-1" style="height: 100%;">
             <b-card-header header-tag="header" class="p-1" role="tab">
                 <b-input-group prepend="@">
@@ -13,6 +14,7 @@
             </b-card-header>
                 <b-card-body>
                     <b-row align-v="stretch" style="max-height: 400px" class="overflow-auto">
+                        
                         <b-container v-for="message in messages" :key="message.id" class="message">
                             <b-card
                                 v-bind:img-src="message.player && message.player.color === 'w' ? '/wikipedia/wK.png' : '/wikipedia/bK.png'"
@@ -49,14 +51,14 @@ export default {
         },
     },
     components: {
-        BContainer,
-        BFormInput,
-        BInputGroupAppend,
-        BInputGroup,
-        BRow,
-        BButton,
-        BCard, BCardBody, BCardText, BCardHeader
-    },
+    BContainer,
+    BFormInput,
+    BInputGroupAppend,
+    BInputGroup,
+    BRow,
+    BButton,
+    BCard, BCardBody, BCardText, BCardHeader,
+},
     data() {
         return {
             name: '',

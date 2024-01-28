@@ -1,7 +1,7 @@
 <template>
   <!-- player.roomId  ||  status.players -->
   <b-alert :show="dismissCountDown" v-bind:variant="status.variant" @dismissed="dismissCountDown = 0"
-    @dismiss-count-down="countDownChanged">
+    @dismiss-count-down="countDownChanged" style="margin: 15px;">
     <p>{{ status.message }} {{ dismissCountDown }}</p>
     <b-progress v-bind:variant="status.variant" :max="dismissSecs" :value="dismissCountDown" height="4px"></b-progress>
   </b-alert>
