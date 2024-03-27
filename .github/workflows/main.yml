@@ -7,12 +7,12 @@ jobs:
       - name: Get short commit message
         id: short_commit_message
         run: |
-          echo "SHORT_MESSAGE=$(echo '${{ github.event.head_commit.message }}' | cut -c 1-60 | sed 's/[^a-zA-Z0-9 ]//g')" >> $GITHUB_ENV
+          echo "SHORT_MESSAGE=$(echo '${{ github.event.head_commit.message }}' | cut -c 1-57 | sed 's/[.;/#]//g')" >> $GITHUB_ENV
       - uses: noweh/post-tweet-v2-action@v1.0
         with:
           message: |
             Ei, pessoal! Confiram o que acabamos de atualizar no projeto:
-            Mensagem do Commit: ${{ env.SHORT_MESSAGE }}
+            Mensagem do Commit: ${{ env.SHORT_MESSAGE }}...
             URL do Projeto: ${{ github.event.repository.html_url }}
             Horário do Commit: ${{ github.event.head_commit.timestamp }}
             Vem ver! #${{ join(github.event.repository.topics, ' #') }}
