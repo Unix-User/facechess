@@ -1,0 +1,18 @@
+name: Notify twitter
+on: [push]
+jobs:
+  setup:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: noweh/post-tweet-v2-action@v1.0
+        with:
+          message: |
+            Ei, pessoal! Confiram o que acabei de atualizar nesse projeto:
+            Mensagem do Commit: ${{ github.event.head_commit.message }}
+            URL do Projeto: ${{ github.event.repository.html_url }}
+            Horário do Commit: ${{ github.event.head_commit.timestamp }}
+            Vem ver! #${{ join(github.event.repository.topics, ' #') }}
+          consumer-key: ${{ secrets.CONSUMER_KEY }}
+          consumer-secret: ${{ secrets.CONSUMER_SECRET }}
+          access-token: ${{ secrets.ACCESS_TOKEN }}
+          access-token-secret: ${{ secrets.ACCESS_TOKEN_SECRET }}
