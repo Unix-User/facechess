@@ -7,8 +7,8 @@ jobs:
       - uses: noweh/post-tweet-v2-action@v1.0
         with:
           message: |
-            Ei, pessoal! Confiram o que acabei de atualizar nesse projeto:
-            Mensagem do Commit: ${{ github.event.head_commit.message }}
+            Ei, pessoal! Confiram o que acabamos de atualizar no projeto:
+            Mensagem do Commit: ${{ github.event.head_commit.message | slice(0, 60) | replace('?', '') | replace('!', '') | replace('@', '') | replace('#', '') | replace('$', '') | replace('%', '') | replace('^', '') | replace('&', '') | replace('*', '') | replace('(', '') | replace(')', '') | replace('-', '') | replace('+', '') | replace('=', '') | replace('[', '') | replace(']', '') | replace('{', '') | replace('}', '') | replace('|', '') | replace('\\', '') | replace(':', '') | replace(';', '') | replace('"', '') | replace("'", '') | replace('<', '') | replace('>', '') | replace(',', '') | replace('.', '') | replace('/', '') | replace('`', '') | replace('~', '') }}
             URL do Projeto: ${{ github.event.repository.html_url }}
             Horário do Commit: ${{ github.event.head_commit.timestamp }}
             Vem ver! #${{ join(github.event.repository.topics, ' #') }}
