@@ -96,10 +96,6 @@ export default {
         return "snapback";
       }
     },
-    sendMessage(message) {
-      console.log(message)
-      socketClient.sendMessage(message);
-    },
     removeGreySquares() {
       const squares = document.querySelectorAll('.square-55d63');
       squares.forEach(square => square.style.background = '');
@@ -172,12 +168,6 @@ export default {
       this.onReceivedMove(data.from, data.to);
       this.onSnapEnd();
       this.updateStatus();
-    });
-    socketClient.onReceivedMessage((message) => {
-      this.emitter.emit('show-message', { 'message': message, 'player': this.opponent });
-    });
-    socketClient.onMessageSent((message) => {
-      this.emitter.emit('show-message', { 'message': message, 'player': this.player });
     });
     socketClient.onDisconnected(() => {
       this.emitter.emit('status', { 'variant': 'danger', 'message': 'Oponente saiu da sala!' });

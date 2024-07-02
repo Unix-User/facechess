@@ -1,8 +1,8 @@
 <template>
-  <StatusBar
+  <NotificationBox
     :emitter="emitter"
     style="position: absolute; top: 0; right: 0; z-index: 1000"
-  ></StatusBar>
+  ></NotificationBox>
   <div>
     <b-navbar toggleable="lg" type="light" variant="light">
       <b-navbar-brand href="#">
@@ -43,7 +43,6 @@
           <div v-if="page === 'chess'">
             <MyBoard :emitter="emitter"></MyBoard>
           </div>
-          <div v-else-if="page === 'pong'"><PongWars /></div>
         </b-col>
         <b-col>
           <MainChat :emitter="emitter"></MainChat>
@@ -69,8 +68,7 @@ import {
 } from "bootstrap-vue";
 import MainChat from "./components/MainChat.vue";
 import MyBoard from "./components/MyBoard.vue";
-import StatusBar from "./components/StatusBar.vue";
-import PongWars from "./components/PongWars.vue";
+import NotificationBox from "./components/NotificationBox.vue";
 import mitt from "mitt";
 
 export default {
@@ -102,8 +100,7 @@ export default {
     BDropdownItem,
     MyBoard,
     MainChat,
-    StatusBar,
-    PongWars,
+    NotificationBox,
   },
   methods: {
     setPage(newPage) {
