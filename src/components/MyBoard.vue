@@ -5,10 +5,7 @@
 <script>
 import { Chess } from 'chess.js'
 import Chessboard from "chessboardjs-vue3"
-import io from 'socket.io-client'
-
-const url = process.env.VUE_APP_SERVER_URL + ':' + process.env.VUE_APP_SERVER_PORT
-const socket = io(url);
+import socketClient from '@/utils/socketClient';
 
 export default {
   name: 'myBoard',
@@ -35,12 +32,10 @@ export default {
         onMouseoverSquare: (square, piece) => this.onMouseoverSquare(square, piece),
         onSnapEnd: () => this.onSnapEnd()
       }
-
     };
   },
   methods: {
-    // eslint-disable-next-line
-    onDragStart(source, piece, position, orientation) {
+    onDragStart(piece) {
       if (this.game.isGameOver()) {
         this.emitter.emit('status', { 'variant': 'Alert', 'message': 'Esse jogo acabou' });
         return false;
@@ -71,7 +66,8 @@ export default {
         });
       }
       if (move) {
-        socket.emit("move", move);
+        console.log(`Move sent: ${JSON.stringify(move)}`);
+        socketClient.sendMove(move);
         this.onSnapEnd();
       }
       else {
@@ -102,7 +98,7 @@ export default {
     },
     sendMessage(message) {
       console.log(message)
-      this.socket.emit('send-message', message);
+      socketClient.sendMessage(message);
     },
     removeGreySquares() {
       const squares = document.querySelectorAll('.square-55d63');
@@ -116,8 +112,7 @@ export default {
       }
       $square.style.background = background;
     },
-    // eslint-disable-next-line
-    onMouseoverSquare(square, piece) {
+    onMouseoverSquare(square) {
       var moves = this.game.moves({
         square: square,
         verbose: true
@@ -128,8 +123,7 @@ export default {
         this.greySquare(moves[i].to)
       }
     },
-    // eslint-disable-next-line
-    onMouseoutSquare(square, piece) {
+    onMouseoutSquare() {
       this.removeGreySquares()
     },
     updateStatus() {
@@ -156,46 +150,46 @@ export default {
   },
   mounted() {
     this.board = Chessboard("myBoard", this.config);
-    socket.emit("join", this.room);
-    socket.on("room", (data) => {
+    socketClient.joinRoom(this.room);
+    socketClient.onRoom((data) => {
       this.emitter.emit('room', data);
     });
-    socket.on("player", (data) => {
+    socketClient.onPlayer((data) => {
       this.emitter.emit('player', data);
       this.emitter.emit('status', { 'variant': 'info', 'message': (data.color === 'w') ? 'Voce entrou na sala com a cor Branca ' : 'Voce entrou na sala com a cor Preta' });
-      this.player = this.$parent.player
+      this.player = this.$parent.player;
     });
-    socket.on("opponent", (data) => {
+    socketClient.onOpponent((data) => {
       if (this.opponent === null) {
         this.emitter.emit('opponent', data);
         this.emitter.emit('status', { 'variant': 'info', 'message': (data.color === 'w') ? 'Oponente entrou na sala com a cor Branca ' : 'Voce entrou na sala com a cor Preta' });
-        this.opponent = this.$parent.opponent
-        socket.emit('joined', this.player);
+        this.opponent = this.$parent.opponent;
+        socketClient.sendMove('joined', this.player);
       }
     });
-    socket.on('disconnected', () => {
-      this.emitter.emit('status', { 'variant': 'danger', 'message': 'Oponente saiu da sala!' });
-      this.emitter.emit('opponent', '');
-      this.opponent = null;
-      this.clearBoard()
-    });
-    socket.on("move-received", (data) => {
-      console.log(data);
+    socketClient.onMoveReceived((data) => {
+      console.log(`Move received: ${JSON.stringify(data)}`);
       this.onReceivedMove(data.from, data.to);
       this.onSnapEnd();
       this.updateStatus();
     });
-    socket.on('received-message', message => {
+    socketClient.onReceivedMessage((message) => {
       this.emitter.emit('show-message', { 'message': message, 'player': this.opponent });
     });
-    socket.on('message-sent', message => {
+    socketClient.onMessageSent((message) => {
       this.emitter.emit('show-message', { 'message': message, 'player': this.player });
     });
-    this.emitter.on('send-message', message => {
-      socket.emit('send-message', message);
+    socketClient.onDisconnected(() => {
+      this.emitter.emit('status', { 'variant': 'danger', 'message': 'Oponente saiu da sala!' });
+      this.emitter.emit('opponent', '');
+      this.opponent = null;
+      this.clearBoard();
     });
-    this.emitter.on('peer', data => {
-      socket.emit('peer', data);
+    this.emitter.on('send-message', (message) => {
+      socketClient.sendMessage(message);
+    });
+    this.emitter.on('peer', (data) => {
+      socketClient.sendMove('peer', data);
     });
   },
 }
