@@ -1,29 +1,49 @@
 <template>
-  <b-container class="accordion" role="tablist" style="height: 100%;">
-    <b-card no-body class="mb-1" style="height: 100%;">
-      <b-card-header header-tag="header" class="p-1" role="tab">
+  <b-container class="accordion p-0 m-0" role="tablist">
+    <b-card no-body class="d-flex flex-column" style="height: 100%">
+      <b-card-header header-tag="header" role="tab" class="flex-shrink-0">
         <b-input-group prepend="@">
-          <b-form-input v-model="name" placeholder="Username" :state="nameValidationState" @input="resetNameValidationState"></b-form-input>
+          <b-form-input
+            v-model="name"
+            placeholder="Username"
+            :state="nameValidationState"
+            @input="resetNameValidationState"
+          ></b-form-input>
           <b-button><b-icon icon="camera"></b-icon></b-button>
         </b-input-group>
         <template v-if="nameValidationState === 'invalid'">
           Digite um nome de usuario para enviar mensagens!
         </template>
       </b-card-header>
-      <b-card-body>
-        <b-row align-v="stretch" style="max-height: 400px" class="overflow-auto">
-          <b-container v-for="message in messages" :key="message.id" class="message">
-            <b-card v-bind:img-src="message.player && message.player.color === 'w' ? '/wikipedia/wK.png' : '/wikipedia/bK.png'" img-alt="Card image" img-right>
-              <b-card-text>{{ message.message }}</b-card-text>
-            </b-card>
-            <br />
-          </b-container>
-        </b-row>
+      <b-card-body class="messages-container flex-grow-1">
+        <b-container
+          v-for="message in localMessages"
+          :key="message.id"
+          class="message"
+        >
+          <b-card
+            :img-src="
+              message && message.color === 'w'
+                ? '/wikipedia/wK.png'
+                : '/wikipedia/bK.png'
+            "
+            img-alt="Card image"
+            img-right
+          >
+            <b-card-text>{{ message.message }}</b-card-text>
+          </b-card>
+          <br />
+        </b-container>
       </b-card-body>
       <template #footer>
-        <b-row align-v="end">
+        <b-row align-v="end" class="flex-shrink-0">
           <b-input-group>
-            <b-form-input type="text" v-model="text" @keyup.enter="sendMessage" ref="input"></b-form-input>
+            <b-form-input
+              type="text"
+              v-model="text"
+              @keyup.enter="sendMessage"
+              ref="input"
+            ></b-form-input>
             <b-input-group-append>
               <b-button variant="primary" @click="sendMessage">Enviar</b-button>
             </b-input-group-append>
@@ -35,57 +55,103 @@
 </template>
 
 <script>
-// import { BContainer, BFormInput, BInputGroupAppend, BInputGroup, BRow, BButton, BCard, BCardBody, BCardText, BCardHeader } from 'bootstrap-vue';
-import socketClient from '@/utils/socketClient';
+import socketClient from "@/utils/socketClient";
 
 export default {
-  name: 'MainChat',
+  name: "MainChat",
   props: {
     emitter: {
       type: Object,
       required: true,
     },
+    messages: {
+      type: Array,
+      required: true,
+    },
+    boardSize: {
+      type: Number,
+      required: true,
+    },
+    isMobile: {
+      type: Boolean,
+      required: true,
+    }
   },
   data() {
     return {
-      name: '',
-      text: '',
-      nameValidationState: null
-    }
+      name: "",
+      text: "",
+      nameValidationState: null,
+      localMessages: [...this.messages],
+    };
   },
-  computed: {
-    messages() {
-      console.log(this.$parent.messages)
-      return this.$parent.messages;
-    }
+  watch: {
+    messages: {
+      handler(newMessages) {
+        this.localMessages = [...newMessages];
+      },
+      deep: true,
+    },
   },
   methods: {
     sendMessage() {
       if (!this.name) {
-        this.nameValidationState = 'invalid';
+        this.nameValidationState = "invalid";
         return;
       }
-      socketClient.sendMessage(this.name + ': ' + this.text);
-      this.text = '';
+      const message = `${this.name}: ${this.text}`;
+      socketClient.sendMessage({ message, color: this.$root.player.color });
+      this.addMessage(message, this.$root.player.color );
+      this.text = "";
     },
     resetNameValidationState() {
       this.nameValidationState = null;
-    }
+    },
+    addMessage(message, color) {
+      this.localMessages.push({ id: Date.now(), message, color });
+      console.log(`jogador ${color} enviou uma mensagem`);
+    },
   },
   mounted() {
-    socketClient.onReceivedMessage((message) => {
-      this.$parent.messages.push({ message, player: this.$parent.opponent });
-    });
-    socketClient.onMessageSent((message) => {
-      this.$parent.messages.push({ message, player: this.$parent.player });
+    socketClient.onReceivedMessage((data) => {
+      console.log(data);
+      const { message, color } = data;
+      this.addMessage(message, color);
     });
   }
 };
 </script>
 
-<style>
-html,
-body {
+<style scoped>
+.accordion {
+  display: flex;
+  flex-direction: column;
   height: 100%;
+}
+
+.messages-container {
+  flex: 1;
+  overflow-y: auto;
+  height: calc(
+    100% - 56px
+  ); /* Adjust height to account for header and footer */
+}
+
+.message {
+  margin-bottom: 10px;
+}
+
+@media (min-width: 769px) {
+  .messages-container {
+    height: calc(
+      100% - 56px
+    ); /* Adjust height to account for header and footer */
+  }
+}
+
+@media (max-width: 768px) {
+  .messages-container {
+    height: 80vh;
+  }
 }
 </style>

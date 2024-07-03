@@ -158,7 +158,7 @@ export default {
     socketClient.onOpponent((data) => {
       if (this.opponent === null) {
         this.emitter.emit('opponent', data);
-        this.emitter.emit('status', { 'variant': 'info', 'message': (data.color === 'w') ? 'Oponente entrou na sala com a cor Branca ' : 'Voce entrou na sala com a cor Preta' });
+        this.emitter.emit('status', { 'variant': 'info', 'message': (data.color === 'w') ? 'Oponente entrou na sala com a cor Branca ' : 'Oponente entrou na sala com a cor Preta' });
         this.opponent = this.$parent.opponent;
         socketClient.sendMove('joined', this.player);
       }
