@@ -8,7 +8,7 @@ if (process.env.VUE_APP_MODE == 'prod') {
     var clientUrl = process.env.VUE_APP_CLIENT_URL + port
     var cors = { 
         cors: {
-        origin: ["http://localhost:8081"],
+        origin: [clientUrl],
         methods: ["GET", "POST"],
         allowedHeaders: ['Content-Type', 'Authorization'],
         credentials: false
@@ -25,7 +25,7 @@ if (process.env.VUE_APP_MODE == 'dev') {
     var clientUrl = process.env.VUE_APP_CLIENT_URL + ":" + process.env.VUE_APP_CLIENT_PORT;
     var cors = { 
         cors: {
-        origin: [clientUrl, "http://localhost:8081"],
+        origin: [clientUrl],
         methods: ["GET", "POST"],
         allowedHeaders: ['Content-Type', 'Authorization'],
         credentials: false
