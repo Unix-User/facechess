@@ -23,18 +23,20 @@ export default {
       game: new Chess(),
       whiteSquareGrey: '#a9a9a9',
       blackSquareGrey: '#696969',
-      config: {
-        draggable: true,
-        position: "start",
-        onDragStart: (source, piece, position, orientation) => this.onDragStart(source, piece, position, orientation),
-        onDrop: (source, target, piece, newPos, oldPos, orientation) => this.onDrop(source, target, piece, newPos, oldPos, orientation),
-        onMouseoutSquare: (square, piece) => this.onMouseoutSquare(square, piece),
-        onMouseoverSquare: (square, piece) => this.onMouseoverSquare(square, piece),
-        onSnapEnd: () => this.onSnapEnd()
-      }
+      config: null, // Initialize as null
     };
   },
+  computed: {
+    boardOrientation() {
+      return this.player && this.player.color === 'w' ? 'white' : 'black';
+    }
+  },
   methods: {
+    updateBoardOrientation() {
+      if (this.board) {
+        this.board.orientation(this.boardOrientation);
+      }
+    },
     onDragStart(piece) {
       if (this.game.isGameOver()) {
         this.emitter.emit('status', { 'variant': 'Alert', 'message': 'Esse jogo acabou' });
@@ -145,6 +147,16 @@ export default {
     }
   },
   mounted() {
+    this.config = {
+      draggable: true,
+      position: "start",
+      orientation: this.boardOrientation,
+      onDragStart: (source, piece, position, orientation) => this.onDragStart(source, piece, position, orientation),
+      onDrop: (source, target, piece, newPos, oldPos, orientation) => this.onDrop(source, target, piece, newPos, oldPos, orientation),
+      onMouseoutSquare: (square, piece) => this.onMouseoutSquare(square, piece),
+      onMouseoverSquare: (square, piece) => this.onMouseoverSquare(square, piece),
+      onSnapEnd: () => this.onSnapEnd()
+    };
     this.board = Chessboard("myBoard", this.config);
     socketClient.joinRoom(this.room);
     socketClient.onRoom((data) => {
@@ -154,6 +166,7 @@ export default {
       this.emitter.emit('player', data);
       this.emitter.emit('status', { 'variant': 'info', 'message': (data.color === 'w') ? 'Voce entrou na sala com a cor Branca ' : 'Voce entrou na sala com a cor Preta' });
       this.player = this.$parent.player;
+      this.updateBoardOrientation(); // Update board orientation when player data is received
     });
     socketClient.onOpponent((data) => {
       if (this.opponent === null) {

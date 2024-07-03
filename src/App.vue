@@ -63,6 +63,7 @@
             :opponent="opponent"
             :boardSize="boardSize"
             :isMobile="isMobile"
+            class="main-chat"
             :style="{ height: boardSize + 'px' }"
           ></MainChat>
         </b-col>
@@ -95,7 +96,7 @@
               :opponent="opponent"
               :boardSize="boardSize"
               :isMobile="isMobile"
-              class="flex-grow-1"
+              class="flex-grow-1 main-chat"
             ></MainChat>
           </div>
         </b-modal>
@@ -211,7 +212,8 @@ export default {
 
 <style>
 .brand-logo {
-  class: d-inline-block align-top;
+  display: inline-block;
+  vertical-align: top;
 }
 
 .main-container {
@@ -226,5 +228,6 @@ export default {
 
 .main-chat {
   width: 100%;
+  height: 100%;
 }
 </style>
