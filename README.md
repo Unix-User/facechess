@@ -18,6 +18,11 @@ cp .env.example .env
 npm run serve
 ```
 
+### Start development server
+```
+node server/server.js
+```
+
 ### Compiles and minifies for production
 ```
 npm run build

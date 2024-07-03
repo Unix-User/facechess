@@ -49,6 +49,9 @@ export default {
       }
     },
     onDrop(source, target) {
+      if (source === target) {
+        return "snapback";
+      }
       if (this.game.turn() !== this.player.color) {
         this.emitter.emit('status', { 'variant': 'warning', 'message': (this.game.turn() === "w") ? 'Aguarde o turno das brancas terminar' : 'Aguarde o turno das pretas terminar' });
         return "snapback";
@@ -77,6 +80,9 @@ export default {
       }
     },
     onReceivedMove(source, target) {
+      if (source === target) {
+        return "snapback";
+      }
       var piece = this.game.get(source);
       if (piece && piece.type === "p" && (target[1] === "8" || target[1] === "1")) {
         var move = this.game.move({
