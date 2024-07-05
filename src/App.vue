@@ -59,6 +59,8 @@
           <MainChat
             :emitter="emitter"
             :messages="messages"
+            :showVideoStream="showVideoStream"
+            @toggle-video-stream="toggleVideoStream"
             :player="player"
             :opponent="opponent"
             :boardSize="boardSize"
@@ -101,6 +103,12 @@
           </div>
         </b-modal>
       </div>
+      <VideoStream
+        v-if="showVideoStream"
+        :streams="streams"
+        @update-stream="updateStream"
+        @close-stream="closeStream"
+      ></VideoStream>
     </b-container>
   </b-container>
 </template>
@@ -124,6 +132,7 @@ import {
 import MainChat from "./components/MainChat.vue";
 import MyBoard from "./components/MyBoard.vue";
 import NotificationBox from "./components/NotificationBox.vue";
+import VideoStream from "./components/VideoStream.vue";
 import mitt from "mitt";
 
 export default {
@@ -141,6 +150,13 @@ export default {
       isMobile: false,
       showChatModal: false,
       boardSize: 0, // Add this line
+      showVideoStream: JSON.parse(
+        localStorage.getItem("showVideoStream") || "false"
+      ),
+      isVideoStreamMinimized: JSON.parse(
+        localStorage.getItem("isVideoStreamMinimized") || "false"
+      ),
+      streams: [], // Initialize streams as an empty array
     };
   },
   compatConfig: { MODE: 2 },
@@ -161,6 +177,7 @@ export default {
     MyBoard,
     MainChat,
     NotificationBox,
+    VideoStream,
   },
   methods: {
     setPage(newPage) {
@@ -177,6 +194,57 @@ export default {
         document.querySelector(".bv-example-row").clientWidth;
       const containerHeight = window.innerHeight;
       this.boardSize = Math.min(containerWidth / 2, containerHeight);
+    },
+    toggleVideoStream() {
+      this.showVideoStream = !this.showVideoStream;
+      if (this.showVideoStream) {
+        this.initializeVideoStream();
+      } else {
+        this.stopVideoStream();
+      }
+    },
+    initializeVideoStream() {
+      if (!this.streams.length) {
+        this.streams.push({
+          id: Date.now(),
+          mediaStream: null,
+          posX: 0,
+          posY: 0,
+          size: 100,
+          isMinimized: false,
+          isDragging: false,
+          isMuted: false,
+        });
+      }
+    },
+    stopVideoStream() {
+      this.streams.forEach((stream) => {
+        if (stream.mediaStream) {
+          stream.mediaStream.getTracks().forEach((track) => track.stop());
+        }
+      });
+      this.streams = [];
+    },
+    toggleMinimizeVideoStream() {
+      this.isVideoStreamMinimized = !this.isVideoStreamMinimized;
+      localStorage.setItem(
+        "isVideoStreamMinimized",
+        JSON.stringify(this.isVideoStreamMinimized)
+      );
+    },
+    updateStream({ index, key, value }) {
+      this.streams[index][key] = value;
+    },
+    closeStream(index) {
+      if (this.streams[index].mediaStream) {
+        this.streams[index].mediaStream
+          .getTracks()
+          .forEach((track) => track.stop());
+      }
+      this.streams.splice(index, 1);
+      if (this.streams.length === 0) {
+        this.showVideoStream = false;
+      }
     },
   },
   mounted() {
@@ -229,5 +297,16 @@ export default {
 .main-chat {
   width: 100%;
   height: 100%;
+}
+.video-stream-active {
+  padding-right: 320px;
+}
+.fade-enter-active,
+.fade-leave-active {
+  transition: opacity 0.5s;
+}
+.fade-enter,
+.fade-leave-to {
+  opacity: 0;
 }
 </style>

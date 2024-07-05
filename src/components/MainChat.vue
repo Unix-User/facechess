@@ -9,7 +9,15 @@
             :state="nameValidationState"
             @input="resetNameValidationState"
           ></b-form-input>
-          <b-button><b-icon icon="camera"></b-icon></b-button>
+          <b-button
+            @click="$emit('toggle-video-stream')"
+            :variant="showVideoStream ? 'primary' : 'outline-primary'"
+            :aria-label="showVideoStream ? 'Stop video' : 'Start video'"
+          >
+            <b-icon
+              :icon="showVideoStream ? 'camera-video-fill' : 'camera-video'"
+            ></b-icon>
+          </b-button>
         </b-input-group>
         <template v-if="nameValidationState === 'invalid'">
           Digite um nome de usuario para enviar mensagens!
@@ -75,8 +83,13 @@ export default {
     isMobile: {
       type: Boolean,
       required: true,
-    }
+    },
+    showVideoStream: {
+      type: Boolean,
+      required: true,
+    },
   },
+  emits: ["toggle-video-stream"],
   data() {
     return {
       name: "",
@@ -101,7 +114,7 @@ export default {
       }
       const message = `${this.name}: ${this.text}`;
       socketClient.sendMessage({ message, color: this.$root.player.color });
-      this.addMessage(message, this.$root.player.color );
+      this.addMessage(message, this.$root.player.color);
       this.text = "";
     },
     resetNameValidationState() {
@@ -118,7 +131,7 @@ export default {
       const { message, color } = data;
       this.addMessage(message, color);
     });
-  }
+  },
 };
 </script>
 
