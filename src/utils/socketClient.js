@@ -1,91 +1,63 @@
 import io from 'socket.io-client';
+import { stateManager } from './stateManager';
 
-const url = process.env.VUE_APP_SERVER_URL + ':' + process.env.VUE_APP_SERVER_PORT;
-const socket = io(url);
+const url = `${process.env.VUE_APP_SERVER_URL}:${process.env.VUE_APP_SERVER_PORT}`;
+let socket;
 
-// Emit join event
-const joinRoom = (room) => {
-  console.log(`Joining room: ${room}`);
-  socket.emit('join', room);
+const initializeSocket = () => {
+  if (!socket) {
+    socket = io(url);
+    setupEventListeners();
+  }
 };
 
-// Listen for room event
-const onRoom = (callback) => {
-  socket.on('room', (data) => {
-    console.log(`Room data received: ${JSON.stringify(data)}`);
-    callback(data);
+const setupEventListeners = () => {
+  const events = ['room', 'player', 'opponent', 'move-received', 'disconnected', 'received-message'];
+  events.forEach(event => {
+    socket.on(event, data => {
+      console.log(`Received ${event} event:`, data);
+      stateManager.updateState(event, data); // Simplificação da lógica de atualização de estado
+    });
   });
 };
 
-// Listen for player event
-const onPlayer = (callback) => {
-  socket.on('player', (data) => {
-    console.log(`Player data received: ${JSON.stringify(data)}`);
-    callback(data);
-  });
+const emitEvent = (event, data) => {
+  initializeSocket();
+  if (socket) {
+    console.log(`Emitting ${event}:`, data);
+    socket.emit(event, data);
+  }
 };
 
-// Listen for opponent event
-const onOpponent = (callback) => {
-  socket.on('opponent', (data) => {
-    console.log(`Opponent data received: ${JSON.stringify(data)}`);
-    callback(data);
-  });
-};
-
-// Listen for move-received event
-const onMoveReceived = (callback) => {
-  socket.on('move-received', (data) => {
-    console.log(`Move received: ${JSON.stringify(data)}`);
-    callback(data);
-  });
-};
-
-// Emit move event
-const sendMove = (move) => {
-  console.log(`Sending move: ${JSON.stringify(move)}`);
-  socket.emit('move', move);
-};
-
-// Emit send-message event
-const sendMessage = (message) => {
-  console.log(`Sending message: ${message}`);
-  socket.emit('send-message', message);
-};
-
-// Listen for received-message event
-const onReceivedMessage = (callback) => {
-  socket.on('received-message', (message) => {
-    console.log(`Message received: ${message}`);
-    callback(message);
-  });
-};
-
-// Listen for message-sent event
-const onMessageSent = (callback) => {
-  socket.on('message-sent', (message) => {
-    console.log(`Message sent: ${message}`);
-    callback(message);
-  });
-};
-
-// Listen for disconnected event
-const onDisconnected = (callback) => {
-  socket.on('disconnected', (data) => {
-    console.log(`Disconnected: ${data}`);
-    callback(data);
-  });
+const onEvent = (event, callback) => {
+  initializeSocket();
+  if (socket) {
+    socket.on(event, data => {
+      console.log(`${event} event received:`, data);
+      callback(data);
+    });
+  }
 };
 
 export default {
-  joinRoom,
-  onRoom,
-  onPlayer,
-  onOpponent,
-  onMoveReceived,
-  sendMove,
-  sendMessage,
-  onReceivedMessage,
-  onMessageSent,
-  onDisconnected,
+  joinRoom: (room) => emitEvent('join', room),
+  sendMove: (move) => emitEvent('move', move),
+  sendMessage: (message) => emitEvent('send-message', message),
+  sendPeerInfo: (peerInfo) => emitEvent('peer-info', peerInfo),
+  startVideoCall: (data) => emitEvent('start-video-call', data),
+  stopVideoCall: (data) => emitEvent('stop-video-call', data),
+  sendStreamToParticipants: (stream, roomId) => emitEvent('share-camera', { roomId, stream }),
+  stopStreamForParticipants: (roomId) => emitEvent('stop-camera', { roomId }),
+  onIncomingStream: (callback) => onEvent('incoming-stream', callback),
+  onRemoteStreamReceived: (callback) => onEvent('remote-stream', callback),
+  onRemoteStreamStopped: (callback) => onEvent('remote-stream-stopped', callback),
+  onVideoCallStarted: (callback) => onEvent('video-call-started', callback),
+  onVideoCallStopped: (callback) => onEvent('video-call-stopped', callback),
+  onRoom: (callback) => onEvent('room', callback),
+  onPlayer: (callback) => onEvent('player', callback),
+  onOpponent: (callback) => onEvent('opponent', callback),
+  onMoveReceived: (callback) => onEvent('move-received', callback),
+  onDisconnected: (callback) => onEvent('disconnected', callback),
+  onReceivedMessage: (callback) => onEvent('received-message', callback),
+  on: (event, callback) => onEvent(event, callback)
 };
