@@ -53,11 +53,11 @@ io.on('connection', (socket) => {
         }
         if (!found) {
             roomId = rooms.length;
-            rooms.push({ players: 0, pid: [null, null] });
+            rooms.push({ players: 0, pid: Object.create(null) }); // Use Object.create(null) to avoid prototype pollution
         }
 
-        for (let i = 0; i < rooms[roomId].pid.length; i++) {
-            if (rooms[roomId].pid[i] === null) {
+        for (let i = 0; i < 2; i++) { // Adjusted loop to handle pid as an object
+            if (!rooms[roomId].pid[i]) {
                 rooms[roomId].pid[i] = playerId;
                 color = (i === 0) ? 'w' : 'b';
                 break;
@@ -66,7 +66,7 @@ io.on('connection', (socket) => {
         rooms[roomId].players++;
         console.log('a player had conected to this room:' + roomId, rooms[roomId]);
         // envia dados do jogador para oponente
-        if (rooms[roomId].pid.includes(playerId)) {
+        if (rooms[roomId].pid[0] === playerId || rooms[roomId].pid[1] === playerId) {
             let opponent = (rooms[roomId].pid[0] === playerId) ? rooms[roomId].pid[1] : rooms[roomId].pid[0];
             socket.to(opponent).emit('room', rooms[roomId]);
             socket.to(opponent).emit('opponent', {
@@ -87,7 +87,7 @@ io.on('connection', (socket) => {
     });
     socket.on('joined', function (data) {
         for (let i = 0; i < rooms.length; i++) {
-            if (rooms[i].pid.includes(data.playerId)) {
+            if (rooms[i].pid[0] === data.playerId || rooms[i].pid[1] === data.playerId) {
                 let opponent = (rooms[i].pid[0] === data.playerId) ? rooms[i].pid[1] : rooms[i].pid[0];
 
                 socket.to(opponent).emit('opponent', data);
@@ -97,7 +97,7 @@ io.on('connection', (socket) => {
     });
     socket.on('move', function (move) {
         for (let i = 0; i < rooms.length; i++) {
-            if (rooms[i].pid.includes(playerId)) {
+            if (rooms[i].pid[0] === playerId || rooms[i].pid[1] === playerId) {
                 let opponent = (rooms[i].pid[0] === playerId) ? rooms[i].pid[1] : rooms[i].pid[0];
                 socket.to(opponent).emit('move-received', move);
             }
@@ -106,7 +106,7 @@ io.on('connection', (socket) => {
     socket.on('send-message', (msg) => {
         console.log(msg)
         for (let i = 0; i < rooms.length; i++) {
-            if (rooms[i].pid.includes(playerId)) {
+            if (rooms[i].pid[0] === playerId || rooms[i].pid[1] === playerId) {
                 let opponent = (rooms[i].pid[0] === playerId) ? rooms[i].pid[1] : rooms[i].pid[0];
                 socket.to(opponent).emit('received-message', msg);
             }
@@ -115,7 +115,7 @@ io.on('connection', (socket) => {
     });
     socket.on('peer', peer => {
         for (let i = 0; i < rooms.length; i++) {
-            if (rooms[i].pid.includes(socket.id)) {
+            if (rooms[i].pid[0] === socket.id || rooms[i].pid[1] === socket.id) {
                 let opponent = (rooms[i].pid[0] === socket.id) ? rooms[i].pid[1] : rooms[i].pid[0];
                 socket.to(opponent).emit('peer', peer);
                 break;
@@ -129,7 +129,7 @@ io.on('connection', (socket) => {
                 if (rooms[i].players === 0) {
                     rooms.splice(i, 1);
                 } else {
-                    if (rooms[i].pid.includes(playerId)) {
+                    if (rooms[i].pid[0] === playerId || rooms[i].pid[1] === playerId) {
                         let opponent = (rooms[i].pid[0] === playerId) ? rooms[i].pid[1] : rooms[i].pid[0];
                         socket.to(opponent).emit('room', rooms[i]);
                         socket.to(opponent).emit('disconnected', playerId)
