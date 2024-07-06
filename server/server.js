@@ -53,12 +53,12 @@ io.on('connection', (socket) => {
         }
         if (!found) {
             roomId = rooms.length;
-            rooms.push({ players: 0, pid: Object.create(null) }); // Use Object.create(null) to avoid prototype pollution
+            rooms.push({ players: 0, pid: new Map() }); // Use Map to avoid prototype pollution
         }
 
-        for (let i = 0; i < 2; i++) { // Adjusted loop to handle pid as an object
-            if (!rooms[roomId].pid[i]) {
-                rooms[roomId].pid[i] = playerId;
+        for (let i = 0; i < 2; i++) { // Adjusted loop to handle pid as a Map
+            if (!rooms[roomId].pid.has(i)) {
+                rooms[roomId].pid.set(i, playerId);
                 color = (i === 0) ? 'w' : 'b';
                 break;
             }
@@ -66,8 +66,8 @@ io.on('connection', (socket) => {
         rooms[roomId].players++;
         console.log(`A player has connected to this room: ${roomId}`, rooms[roomId]);
         // envia dados do jogador para oponente
-        if (rooms[roomId].pid[0] === playerId || rooms[roomId].pid[1] === playerId) {
-            let opponent = (rooms[roomId].pid[0] === playerId) ? rooms[roomId].pid[1] : rooms[roomId].pid[0];
+        if (rooms[roomId].pid.get(0) === playerId || rooms[roomId].pid.get(1) === playerId) {
+            let opponent = (rooms[roomId].pid.get(0) === playerId) ? rooms[roomId].pid.get(1) : rooms[roomId].pid.get(0);
             socket.to(opponent).emit('room', rooms[roomId]);
             socket.to(opponent).emit('opponent', {
                 playerId,
@@ -87,8 +87,8 @@ io.on('connection', (socket) => {
     });
     socket.on('joined', function (data) {
         for (let i = 0; i < rooms.length; i++) {
-            if (rooms[i].pid[0] === data.playerId || rooms[i].pid[1] === data.playerId) {
-                let opponent = (rooms[i].pid[0] === data.playerId) ? rooms[i].pid[1] : rooms[i].pid[0];
+            if (rooms[i].pid.get(0) === data.playerId || rooms[i].pid.get(1) === data.playerId) {
+                let opponent = (rooms[i].pid.get(0) === data.playerId) ? rooms[i].pid.get(1) : rooms[i].pid.get(0);
 
                 socket.to(opponent).emit('opponent', data);
             }
@@ -97,8 +97,8 @@ io.on('connection', (socket) => {
     });
     socket.on('move', function (move) {
         for (let i = 0; i < rooms.length; i++) {
-            if (rooms[i].pid[0] === playerId || rooms[i].pid[1] === playerId) {
-                let opponent = (rooms[i].pid[0] === playerId) ? rooms[i].pid[1] : rooms[i].pid[0];
+            if (rooms[i].pid.get(0) === playerId || rooms[i].pid.get(1) === playerId) {
+                let opponent = (rooms[i].pid.get(0) === playerId) ? rooms[i].pid.get(1) : rooms[i].pid.get(0);
                 socket.to(opponent).emit('move-received', move);
             }
         }
@@ -106,8 +106,8 @@ io.on('connection', (socket) => {
     socket.on('send-message', (msg) => {
         console.log(msg)
         for (let i = 0; i < rooms.length; i++) {
-            if (rooms[i].pid[0] === playerId || rooms[i].pid[1] === playerId) {
-                let opponent = (rooms[i].pid[0] === playerId) ? rooms[i].pid[1] : rooms[i].pid[0];
+            if (rooms[i].pid.get(0) === playerId || rooms[i].pid.get(1) === playerId) {
+                let opponent = (rooms[i].pid.get(0) === playerId) ? rooms[i].pid.get(1) : rooms[i].pid.get(0);
                 socket.to(opponent).emit('received-message', msg);
             }
         }
@@ -115,8 +115,8 @@ io.on('connection', (socket) => {
     });
     socket.on('peer', peer => {
         for (let i = 0; i < rooms.length; i++) {
-            if (rooms[i].pid[0] === socket.id || rooms[i].pid[1] === socket.id) {
-                let opponent = (rooms[i].pid[0] === socket.id) ? rooms[i].pid[1] : rooms[i].pid[0];
+            if (rooms[i].pid.get(0) === socket.id || rooms[i].pid.get(1) === socket.id) {
+                let opponent = (rooms[i].pid.get(0) === socket.id) ? rooms[i].pid.get(1) : rooms[i].pid.get(0);
                 socket.to(opponent).emit('peer', peer);
                 break;
             }
@@ -124,17 +124,17 @@ io.on('connection', (socket) => {
     });
     socket.on('disconnect', function () {
         for (let i = 0; i < rooms.length; i++) {
-            if (rooms[i].pid[0] === playerId || rooms[i].pid[1] === playerId) {
+            if (rooms[i].pid.get(0) === playerId || rooms[i].pid.get(1) === playerId) {
                 rooms[i].players--;
                 if (rooms[i].players === 0) {
                     rooms.splice(i, 1);
                 } else {
-                    if (rooms[i].pid[0] === playerId || rooms[i].pid[1] === playerId) {
-                        let opponent = (rooms[i].pid[0] === playerId) ? rooms[i].pid[1] : rooms[i].pid[0];
+                    if (rooms[i].pid.get(0) === playerId || rooms[i].pid.get(1) === playerId) {
+                        let opponent = (rooms[i].pid.get(0) === playerId) ? rooms[i].pid.get(1) : rooms[i].pid.get(0);
                         socket.to(opponent).emit('room', rooms[i]);
                         socket.to(opponent).emit('disconnected', playerId)
                     }
-                    rooms[i].pid[0] === playerId ? rooms[i].pid[0] = null : rooms[i].pid[1] = null;
+                    rooms[i].pid.get(0) === playerId ? rooms[i].pid.set(0, null) : rooms[i].pid.set(1, null);
                 }
                 (rooms[i]) ? console.log(`A player has disconnected from room: ${i}`, rooms[i]) : console.log('Last player disconnected, there are no rooms now');
                 break;
