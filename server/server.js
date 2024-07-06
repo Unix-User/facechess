@@ -64,7 +64,7 @@ io.on('connection', (socket) => {
             }
         }
         rooms[roomId].players++;
-        console.log('a player had conected to this room:' + roomId, rooms[roomId]);
+        console.log(`A player has connected to this room: ${roomId}`, rooms[roomId]);
         // envia dados do jogador para oponente
         if (rooms[roomId].pid[0] === playerId || rooms[roomId].pid[1] === playerId) {
             let opponent = (rooms[roomId].pid[0] === playerId) ? rooms[roomId].pid[1] : rooms[roomId].pid[0];
@@ -136,7 +136,7 @@ io.on('connection', (socket) => {
                     }
                     rooms[i].pid[0] === playerId ? rooms[i].pid[0] = null : rooms[i].pid[1] = null;
                 }
-                (rooms[i]) ? console.log('a player had disconected from room:' + i, rooms[i]) : console.log('last player disconected there is no rooms now');
+                (rooms[i]) ? console.log(`A player has disconnected from room: ${i}`, rooms[i]) : console.log('Last player disconnected, there are no rooms now');
                 break;
             }
         }
