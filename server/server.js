@@ -4,7 +4,7 @@ require('dotenv').config()
 const serverUrl = process.env.VUE_APP_SERVER_URL + ':' + process.env.VUE_APP_SERVER_PORT
 if (process.env.VUE_APP_MODE == 'prod') {
     console.log('production mode')
-    var clientUrls = process.env.VUE_APP_CLIENT_URLS.split(',').map(url => url + ":" + process.env.VUE_APP_CLIENT_PORT);
+    var clientUrls = process.env.VUE_APP_CLIENT_URLS.split(',').map(url => url);
     var cors = { 
         cors: {
         origin: clientUrls,

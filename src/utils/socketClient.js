@@ -3,21 +3,25 @@ import { stateManager } from './stateManager';
 
 const url = `${process.env.VUE_APP_SERVER_URL}:${process.env.VUE_APP_SERVER_PORT}`;
 let socket;
+let socketInitialized = false;
 
 const initializeSocket = () => {
-  if (!socket) {
+  if (!socketInitialized) {
     socket = io(url);
     setupEventListeners();
+    socketInitialized = true;
   }
 };
 
 const setupEventListeners = () => {
   const events = ['room', 'player', 'opponent', 'move-received', 'disconnected', 'received-message'];
   events.forEach(event => {
-    socket.on(event, data => {
-      console.log(`Received ${event} event:`, data);
-      stateManager.updateState(event, data); // Simplificação da lógica de atualização de estado
-    });
+    if (!socket.hasListeners(event)) {
+      socket.on(event, data => {
+        console.log(`Received ${event} event:`, data);
+        stateManager.updateState(event, data);
+      });
+    }
   });
 };
 
@@ -59,5 +63,7 @@ export default {
   onMoveReceived: (callback) => onEvent('move-received', callback),
   onDisconnected: (callback) => onEvent('disconnected', callback),
   onReceivedMessage: (callback) => onEvent('received-message', callback),
-  on: (event, callback) => onEvent(event, callback)
+  on: (event, callback) => onEvent(event, callback),
+  emitEvent, // Exporting emitEvent function
+  onEvent // Corrected export of onEvent function
 };
