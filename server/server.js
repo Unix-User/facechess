@@ -5,7 +5,7 @@ const serverUrl = process.env.VUE_APP_SERVER_URL + ':' + process.env.VUE_APP_SER
 if (process.env.VUE_APP_MODE == 'prod') {
     console.log('production mode')
     const port = (process.env.VUE_APP_CLIENT_PORT == '80') ? '' : ":" + process.env.VUE_APP_CLIENT_PORT
-    var clientUrls = process.env.VUE_APP_CLIENT_URLS.split(',').map(url => url + port);
+    var clientUrls = process.env.VUE_APP_CLIENT_URLS.split(',').map(url => url + ":" + port);
     var cors = { 
         cors: {
         origin: clientUrls,
