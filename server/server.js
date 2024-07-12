@@ -5,10 +5,10 @@ const serverUrl = process.env.VUE_APP_SERVER_URL + ':' + process.env.VUE_APP_SER
 if (process.env.VUE_APP_MODE == 'prod') {
     console.log('production mode')
     const port = (process.env.VUE_APP_CLIENT_PORT == '80') ? '' : ":" + process.env.VUE_APP_CLIENT_PORT
-    var clientUrl = process.env.VUE_APP_CLIENT_URL + port
+    var clientUrls = process.env.VUE_APP_CLIENT_URLS.split(',').map(url => url + port);
     var cors = { 
         cors: {
-        origin: [clientUrl],
+        origin: clientUrls,
         methods: ["GET", "POST"],
         allowedHeaders: ['Content-Type', 'Authorization'],
         credentials: false
@@ -22,10 +22,10 @@ if (process.env.VUE_APP_MODE == 'prod') {
 
 if (process.env.VUE_APP_MODE == 'dev') {
     console.log('development mode')
-    var clientUrl = process.env.VUE_APP_CLIENT_URL + ":" + process.env.VUE_APP_CLIENT_PORT;
+    var clientUrls = process.env.VUE_APP_CLIENT_URLS.split(',').map(url => url + ":" + process.env.VUE_APP_CLIENT_PORT);
     var cors = { 
         cors: {
-        origin: [clientUrl],
+        origin: clientUrls,
         methods: ["GET", "POST"],
         allowedHeaders: ['Content-Type', 'Authorization'],
         credentials: false
