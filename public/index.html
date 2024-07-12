@@ -5,12 +5,12 @@
     <meta http-equiv="X-UA-Compatible" content="IE=edge" />
     <meta name="viewport" content="width=device-width,initial-scale=1.0" />
     <link rel="icon" href="<%= BASE_URL %>favicon.ico" />
-    <meta property="og:url" content="https://facechess.udianix.com.br/" />
+    <meta property="og:url" content="<%= process.env.VUE_APP_BASE_URL %>" />
     <meta property="og:type" content="website" />
     <meta property="og:title" content="FaceChess" />
     <meta
       property="og:image"
-      content="https://facechess.udianix.com.br/background.jpg"
+      content="<%= process.env.VUE_APP_BASE_URL %>background.jpg"
     />
     <meta
       property="og:description"
