@@ -1,4 +1,12 @@
 <template>
+  <meta property="og:url" content="https://facechess.udianix.com.br/" />
+  <meta property="og:type" content="website" />
+  <meta property="og:title" content="FaceChess" />
+  <meta property="og:image" content="https://facechess.udianix.com.br/background.jpg" />
+  <meta
+    property="og:description"
+    content="There’s attitude and there’s CATTITUDE..."
+  />
   <NotificationBox
     :emitter="emitter"
     style="position: absolute; top: 0; right: 0; z-index: 1000"
@@ -114,7 +122,6 @@
 </template>
 
 <script>
-import { Analytics } from "@vercel/analytics/react"
 import {
   BNavbar,
   BNavbarBrand,
@@ -288,6 +295,8 @@ export default {
 .main-container {
   padding: 4px;
   margin: 0;
+  background-size: cover;
+  background-position: center;
 }
 
 .my-board {
