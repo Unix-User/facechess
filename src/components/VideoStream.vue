@@ -18,6 +18,7 @@
         :srcObject.prop="stream.mediaStream"
         autoplay
         :muted="stream.isMuted"
+        class="video-element"
       ></video>
       <div class="controls">
         <b-button
@@ -37,15 +38,17 @@
       </div>
       <div
         class="resize-handle"
-        @mousedown="startResizing(index, $event)"
-        @touchstart="startResizing(index, $event)"
+        @mousedown="startResizing(index)"
+        @touchstart="startResizing(index)"
       ></div>
     </div>
   </div>
 </template>
 
 <script>
-import { ref, onMounted, onUnmounted, nextTick } from "vue";
+import { ref, onUnmounted, nextTick } from "vue";
+import Peer from "peerjs";
+import socketClient from "@/utils/socketClient";
 
 export default {
   name: "VideoStream",
@@ -57,7 +60,13 @@ export default {
   },
   setup(props, { emit }) {
     const videoRefs = ref([]);
-    const observer = ref(null);
+    const peer = ref(null);
+    const localStream = ref(null);
+    const connections = ref([]);
+    const draggingStream = ref(null);
+    const offset = ref({ x: 0, y: 0 });
+    const ownId = ref('');
+    const peers = ref({});
 
     const updateVideoRef = (el, index) => {
       if (el) {
@@ -65,179 +74,130 @@ export default {
       }
     };
 
-    const debounce = (func, wait) => {
-      let timeout;
-      return function executedFunction(...args) {
-        const later = () => {
-          clearTimeout(timeout);
-          func(...args);
-        };
-        clearTimeout(timeout);
-        timeout = setTimeout(later, wait);
-      };
-    };
-
     const startDragging = (index, event) => {
-      const stream = props.streams[index];
-      stream.isDragging = true;
-      stream.dragStartX =
-        (event.clientX || event.touches[0].clientX) - stream.posX;
-      stream.dragStartY =
-        (event.clientY || event.touches[0].clientY) - stream.posY;
-      document.addEventListener("mousemove", drag);
-      document.addEventListener("touchmove", drag);
+      draggingStream.value = index;
+      offset.value = {
+        x: event.clientX - props.streams[index].posX,
+        y: event.clientY - props.streams[index].posY,
+      };
+      document.addEventListener("mousemove", onDrag);
       document.addEventListener("mouseup", stopDragging);
-      document.addEventListener("touchend", stopDragging);
     };
 
-    const drag = debounce((event) => {
-      const stream = props.streams.find((s) => s.isDragging);
-      if (stream) {
-        requestAnimationFrame(() => {
-          stream.posX =
-            (event.clientX || event.touches[0].clientX) - stream.dragStartX;
-          stream.posY =
-            (event.clientY || event.touches[0].clientY) - stream.dragStartY;
-          checkOverlap(stream);
-        });
+    const onDrag = (event) => {
+      if (draggingStream.value !== null) {
+        emit('update-stream', { index: draggingStream.value, key: 'posX', value: event.clientX - offset.value.x });
+        emit('update-stream', { index: draggingStream.value, key: 'posY', value: event.clientY - offset.value.y });
       }
-    }, 16);
+    };
 
     const stopDragging = () => {
-      props.streams.forEach((stream) => (stream.isDragging = false));
-      document.removeEventListener("mousemove", drag);
-      document.removeEventListener("touchmove", drag);
+      draggingStream.value = null;
+      document.removeEventListener("mousemove", onDrag);
       document.removeEventListener("mouseup", stopDragging);
-      document.removeEventListener("touchend", stopDragging);
     };
 
-    const checkOverlap = (currentStream) => {
-      props.streams.forEach((stream) => {
-        if (stream !== currentStream) {
-          const dx = currentStream.posX - stream.posX;
-          const dy = currentStream.posY - stream.posY;
-          const distance = Math.sqrt(dx * dx + dy * dy);
-          if (distance < currentStream.size) {
-            const angle = Math.atan2(dy, dx);
-            stream.posX =
-              currentStream.posX - Math.cos(angle) * currentStream.size;
-            stream.posY =
-              currentStream.posY - Math.sin(angle) * currentStream.size;
-          }
+    const startResizing = (index) => {
+      // Implement your resizing logic here
+      console.log(`Start resizing stream ${index}`);
+    };
+
+    const toggleMute = (index) => {
+      emit('update-stream', { index, key: 'isMuted', value: !props.streams[index].isMuted });
+    };
+
+    const startCall = async () => {
+      localStream.value = await navigator.mediaDevices.getUserMedia({ video: true, audio: true });
+      
+      await nextTick();
+      if (videoRefs.value[0]) {
+        videoRefs.value[0].srcObject = localStream.value;
+      }
+
+      peer.value = new Peer(undefined, {
+        config: {
+          iceServers: [
+            { urls: 'stun:stun.l.google.com:19302' },
+            {
+              urls: 'turn:your.turn.server:3478',
+              username: 'your-username',
+              credential: 'your-credential'
+            }
+          ]
+        }
+      });
+
+      peer.value.on('open', id => {
+        ownId.value = id;
+        socketClient.joinRoom('your-room-id');
+        socketClient.sendPeerInfo({ id });
+      });
+
+      peer.value.on('call', call => {
+        call.answer(localStream.value);
+        call.on('stream', remoteStream => {
+          addVideoStream(call.peer, remoteStream);
+        });
+      });
+
+      socketClient.on('user-connected', userId => {
+        if (userId !== ownId.value) {
+          callUser(userId);
+        }
+      });
+
+      socketClient.on('user-disconnected', userId => {
+        if (peers.value[userId]) {
+          peers.value[userId].close();
         }
       });
     };
 
-    const toggleMute = (index) => {
-      emit("update-stream", {
-        index,
-        key: "isMuted",
-        value: !props.streams[index].isMuted,
+    const callUser = (userId) => {
+      const call = peer.value.call(userId, localStream.value);
+      handleStream(call);
+    };
+
+    const handleStream = (call) => {
+      call.on('stream', remoteStream => {
+        addVideoStream(call.peer, remoteStream);
       });
+      call.on('close', () => {
+        emit('remove-stream', call.peer);
+      });
+      peers.value[call.peer] = call;
+    };
+
+    const addVideoStream = (id, stream) => {
+      emit('add-stream', { id, stream });
     };
 
     const closeStream = (index) => {
-      emit("close-stream", index);
-    };
-
-    const startResizing = (index, event) => {
-      const stream = props.streams[index];
-      stream.isResizing = true;
-      stream.resizeStartX = event.clientX || event.touches[0].clientX;
-      stream.resizeStartY = event.clientY || event.touches[0].clientY;
-      stream.resizeStartSize = stream.size;
-      document.addEventListener("mousemove", resize);
-      document.addEventListener("touchmove", resize);
-      document.addEventListener("mouseup", stopResizing);
-      document.addEventListener("touchend", stopResizing);
-    };
-
-    const resize = debounce((event) => {
-      const stream = props.streams.find((s) => s.isResizing);
-      if (stream) {
-        requestAnimationFrame(() => {
-          const dx =
-            (event.clientX || event.touches[0].clientX) - stream.resizeStartX;
-          const dy =
-            (event.clientY || event.touches[0].clientY) - stream.resizeStartY;
-          const newSize = stream.resizeStartSize + Math.max(dx, dy);
-          stream.size = Math.max(50, Math.min(300, newSize)); // Limit size between 50 and 300 pixels
-        });
+      if (props.streams[index].mediaStream) {
+        props.streams[index].mediaStream.getTracks().forEach(track => track.stop());
       }
-    }, 16);
-
-    const stopResizing = () => {
-      props.streams.forEach((stream) => (stream.isResizing = false));
-      document.removeEventListener("mousemove", resize);
-      document.removeEventListener("touchmove", resize);
-      document.removeEventListener("mouseup", stopResizing);
-      document.removeEventListener("touchend", stopResizing);
+      emit('close-stream', index);
+      emit('toggle-video-stream');
     };
-
-    onMounted(() => {
-      observer.value = new IntersectionObserver((entries) => {
-        entries.forEach((entry) => {
-          if (entry.isIntersecting) {
-            const index = videoRefs.value.findIndex(
-              (ref) => ref === entry.target
-            );
-            if (index !== -1 && !props.streams[index].mediaStream) {
-              navigator.mediaDevices
-                .getUserMedia({ video: true, audio: true })
-                .then((stream) => {
-                  emit("update-stream", {
-                    index,
-                    key: "mediaStream",
-                    value: stream,
-                  });
-                })
-                .catch((error) =>
-                  console.error("Error accessing media devices:", error)
-                );
-            }
-          } else {
-            const index = videoRefs.value.findIndex(
-              (ref) => ref === entry.target
-            );
-            if (index !== -1 && props.streams[index].mediaStream) {
-              props.streams[index].mediaStream
-                .getTracks()
-                .forEach((track) => (track.enabled = false));
-            }
-          }
-        });
-      });
-
-      // Use nextTick to ensure the DOM has been updated
-      nextTick(() => {
-        videoRefs.value.forEach((ref) => {
-          if (ref && ref instanceof Element) {
-            observer.value.observe(ref);
-          }
-        });
-      });
-    });
 
     onUnmounted(() => {
-      if (observer.value) {
-        observer.value.disconnect();
+      if (peer.value) {
+        peer.value.destroy();
       }
-      if (props.streams) {
-        props.streams.forEach((stream) => {
-          if (stream.mediaStream) {
-            stream.mediaStream.getTracks().forEach((track) => track.stop());
-          }
-        });
+      if (localStream.value) {
+        localStream.value.getTracks().forEach(track => track.stop());
       }
+      connections.value.forEach(conn => conn.close());
     });
 
     return {
       videoRefs,
       updateVideoRef,
       startDragging,
+      startResizing,
       toggleMute,
       closeStream,
-      startResizing,
+      startCall, // Expose startCall method
     };
   },
 };
@@ -246,48 +206,44 @@ export default {
 <style scoped>
 .video-circle {
   position: absolute;
+  cursor: grab;
   border-radius: 50%;
   overflow: hidden;
-  transition: all 0.3s ease;
 }
+
 .video-circle.dragging {
-  opacity: 0.8;
-  box-shadow: 0 0 10px rgba(0, 0, 0, 0.5);
+  cursor: grabbing;
 }
-video {
+
+.video-element {
   width: 100%;
   height: 100%;
   object-fit: cover;
 }
+
 .controls {
   position: absolute;
   bottom: 10px;
-  left: 50%;
-  transform: translateX(-50%);
+  left: 10px;
   display: flex;
-  justify-content: center;
-  background-color: rgba(0, 0, 0, 0.5);
-  border-radius: 20px;
-  padding: 5px;
+  gap: 5px;
 }
+
 .control-button {
-  width: 30px;
-  height: 30px;
-  padding: 0;
-  margin: 0 5px;
+  padding: 5px;
   border-radius: 50%;
   display: flex;
-  justify-content: center;
   align-items: center;
+  justify-content: center;
 }
+
 .resize-handle {
   position: absolute;
-  right: 0;
   bottom: 0;
-  width: 20px;
-  height: 20px;
+  right: 0;
+  width: 10px;
+  height: 10px;
+  background: #fff;
   cursor: se-resize;
-  background-color: rgba(255, 255, 255, 0.5);
-  border-radius: 0 0 50% 0;
 }
 </style>

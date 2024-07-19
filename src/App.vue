@@ -17,13 +17,13 @@
       <b-collapse id="nav-collapse" is-nav>
         <b-navbar-nav :class="{ 'mx-auto': isMobile, 'text-center': isMobile }">
           <b-nav-item href="#" disabled :class="{ 'text-center': isMobile }"
-            >Sala: {{ player.roomId }}</b-nav-item
+            >Sala: {{ player ? player.roomId : "" }}</b-nav-item
           >
           <b-nav-item href="#" disabled :class="{ 'text-center': isMobile }"
-            >Online: {{ room.players }}</b-nav-item
+            >Online: {{ room ? room.players : "" }}</b-nav-item
           >
           <b-nav-item href="#" disabled :class="{ 'text-center': isMobile }"
-            >Cor: {{ player.color === "w" ? "branco" : "preto" }}</b-nav-item
+            >Cor: {{ player ? (player.color === "w" ? "branco" : "preto") : "" }}</b-nav-item
           >
           <b-nav-item-dropdown
             text="Desenvolvedores"
@@ -141,9 +141,12 @@ export default {
     return {
       emitter: mitt(),
       peer: "",
-      room: "",
+      room: null,
       status: "",
-      player: "",
+      player: {
+        color: "w", // Inicialize com um valor padrão
+        roomId: "", // Adicione roomId ao player
+      },
       opponent: "",
       messages: [],
       page: "chess", // default page
@@ -198,24 +201,23 @@ export default {
     toggleVideoStream() {
       this.showVideoStream = !this.showVideoStream;
       if (this.showVideoStream) {
-        this.initializeVideoStream();
+        this.startCall();
       } else {
         this.stopVideoStream();
       }
     },
-    initializeVideoStream() {
-      if (!this.streams.length) {
-        this.streams.push({
-          id: Date.now(),
-          mediaStream: null,
-          posX: 0,
-          posY: 0,
-          size: 100,
-          isMinimized: false,
-          isDragging: false,
-          isMuted: false,
-        });
-      }
+    async startCall() {
+      const localStream = await navigator.mediaDevices.getUserMedia({ video: true, audio: true });
+      this.streams.push({
+        id: Date.now(),
+        mediaStream: localStream,
+        posX: 0,
+        posY: 0,
+        size: 100,
+        isMinimized: false,
+        isDragging: false,
+        isMuted: false,
+      });
     },
     stopVideoStream() {
       this.streams.forEach((stream) => {
@@ -270,6 +272,14 @@ export default {
     this.emitter.on("peer", (peer) => {
       this.peer = peer;
     });
+
+    // Simule a definição da sala e do jogador
+    this.room = 'sala-exemplo';
+    this.player.roomId = this.room;
+
+    // Emita eventos para os componentes filhos
+    this.emitter.emit('room', this.room);
+    this.emitter.emit('player', this.player);
   },
   beforeUnmount() {
     window.removeEventListener("resize", this.checkMobile);

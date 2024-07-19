@@ -1,3 +1,11 @@
+/******************************************************************************************
+ *                                                                                         *
+ *                                    !!!  Atention  !!!                                   *
+ *                                                                                         *
+ *  This server is for testing purposes only and should not be used in production.         *
+ *  Please use the facechess-api (NestJS) for the production environment.                  *
+ *                                                                                         *
+ ******************************************************************************************/
 const { Chess } = require('chess.js');
 const app = require('express')();
 require('dotenv').config()

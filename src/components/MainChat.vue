@@ -72,53 +72,40 @@ export default {
       type: Object,
       required: true,
     },
-    messages: {
-      type: Array,
-      required: true,
-    },
-    boardSize: {
-      type: Number,
-      required: true,
-    },
-    isMobile: {
-      type: Boolean,
-      required: true,
-    },
     showVideoStream: {
       type: Boolean,
+      default: false,
+    },
+    player: {
+      type: Object,
       required: true,
     },
   },
-  emits: ["toggle-video-stream"],
   data() {
     return {
       name: "",
       text: "",
+      localMessages: [],
       nameValidationState: null,
-      localMessages: [...this.messages],
     };
   },
-  watch: {
-    messages: {
-      handler(newMessages) {
-        this.localMessages = [...newMessages];
-      },
-      deep: true,
-    },
-  },
   methods: {
+    resetNameValidationState() {
+      this.nameValidationState = null;
+    },
     sendMessage() {
       if (!this.name) {
         this.nameValidationState = "invalid";
         return;
       }
-      const message = `${this.name}: ${this.text}`;
-      socketClient.sendMessage({ message, color: this.$root.player.color });
-      this.addMessage(message, this.$root.player.color);
+      const message = {
+        id: Date.now(),
+        message: this.text,
+        color: this.player.color, // Acesse a cor do player de forma segura
+      };
+      this.localMessages.push(message);
+      socketClient.emitEvent("send-message", message);
       this.text = "";
-    },
-    resetNameValidationState() {
-      this.nameValidationState = null;
     },
     addMessage(message, color) {
       this.localMessages.push({ id: Date.now(), message, color });
@@ -126,7 +113,7 @@ export default {
     },
   },
   mounted() {
-    socketClient.onReceivedMessage((data) => {
+    socketClient.onEvent("received-message", (data) => {
       console.log(data);
       const { message, color } = data;
       this.addMessage(message, color);

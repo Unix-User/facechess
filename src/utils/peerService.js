@@ -6,6 +6,11 @@ let localStream = null;
 
 const initialize = async (roomId, userId) => {
   try {
+    if (peer) {
+      console.warn("Peer already initialized");
+      return { peer, localStream };
+    }
+
     localStream = await startLocalStream();
     if (!localStream) throw new Error("Local stream not available");
     
@@ -65,4 +70,3 @@ export default {
   destroyPeer,
   startLocalStream
 };
-

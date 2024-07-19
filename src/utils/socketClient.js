@@ -16,31 +16,25 @@ const initializeSocket = () => {
 const setupEventListeners = () => {
   const events = ['room', 'player', 'opponent', 'move-received', 'disconnected', 'received-message'];
   events.forEach(event => {
-    if (!socket.hasListeners(event)) {
-      socket.on(event, data => {
-        console.log(`Received ${event} event:`, data);
-        stateManager.updateState(event, data);
-      });
-    }
+    socket.on(event, data => {
+      console.log(`Received ${event} event:`, data);
+      stateManager.updateState(event, data);
+    });
   });
 };
 
 const emitEvent = (event, data) => {
   initializeSocket();
-  if (socket) {
-    console.log(`Emitting ${event}:`, data);
-    socket.emit(event, data);
-  }
+  console.log(`Emitting ${event}:`, data);
+  socket.emit(event, data);
 };
 
 const onEvent = (event, callback) => {
   initializeSocket();
-  if (socket) {
-    socket.on(event, data => {
-      console.log(`${event} event received:`, data);
-      callback(data);
-    });
-  }
+  socket.on(event, data => {
+    console.log(`${event} event received:`, data);
+    callback(data);
+  });
 };
 
 export default {
@@ -64,6 +58,6 @@ export default {
   onDisconnected: (callback) => onEvent('disconnected', callback),
   onReceivedMessage: (callback) => onEvent('received-message', callback),
   on: (event, callback) => onEvent(event, callback),
-  emitEvent, // Exporting emitEvent function
-  onEvent // Corrected export of onEvent function
+  emitEvent,
+  onEvent
 };
