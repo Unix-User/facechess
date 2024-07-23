@@ -5,27 +5,24 @@
 <script>
 import { Chess } from "chess.js";
 import Chessboard from "chessboardjs-vue3";
-import socketClient from "@/utils/socketClient";
-import peerService from "@/utils/peerService";
+import boardService from "@/services/boardService";
+import peerService from "@/services/peerService";
 
 export default {
-  name: "myBoard",
+  name: "MyBoard",
   props: {
-    emitter: {
-      type: Object,
-      required: true,
-    },
+    emitter: { type: Object, required: true },
+    player: { type: Object, required: true },
+    opponent: { type: Object, required: true },
+    room: { type: String, required: true },
   },
   data() {
     return {
-      player: null,
-      opponent: null,
       board: null,
       game: new Chess(),
       whiteSquareGrey: "#a9a9a9",
       blackSquareGrey: "#696969",
       config: null,
-      room: null,
     };
   },
   computed: {
@@ -35,78 +32,93 @@ export default {
   },
   methods: {
     updateBoardOrientation() {
-      this.board?.orientation(this.boardOrientation);
+      if (!this.board || !this.player) return;
+      this.board.orientation(this.boardOrientation);
     },
     onDragStart(source, piece) {
       if (this.game.isGameOver()) {
-        this.emitter.emit("status", { variant: "Alert", message: "Esse jogo acabou" });
+        this.emitStatus("Alert", "Esse jogo acabou");
         return false;
       }
-      if ((this.game.turn() === "w" && piece.startsWith("b")) || (this.game.turn() === "b" && piece.startsWith("w"))) {
-        this.emitter.emit("status", {
-          variant: "warning",
-          message: this.game.turn() === "w" ? "Agora é o turno das brancas" : "Agora é o turno das pretas",
-        });
+      if (this.isWrongTurn(piece)) {
+        this.emitTurnWarning();
         return false;
       }
+    },
+    isWrongTurn(piece) {
+      return (
+        (this.game.turn() === "w" && piece.startsWith("b")) ||
+        (this.game.turn() === "b" && piece.startsWith("w"))
+      );
+    },
+    emitTurnWarning() {
+      const message = this.game.turn() === "w"
+        ? "Agora é o turno das brancas"
+        : "Agora é o turno das pretas";
+      this.emitStatus("warning", message);
     },
     onDrop(source, target) {
-      if (source === target || this.game.turn() !== this.player.color) {
-        this.emitter.emit("status", {
-          variant: "warning",
-          message: this.game.turn() === "w" ? "Aguarde o turno das brancas terminar" : "Aguarde o turno das pretas terminar",
-        });
+      if (this.isInvalidMove(source, target)) return "snapback";
+
+      const piece = this.game.get(source);
+      const move = this.makeMove(source, target, piece);
+
+      if (!move) {
+        this.handleInvalidMove(source, target);
         return "snapback";
       }
-      const piece = this.game.get(source);
-      const move = this.game.move({
+
+      this.handleSuccessfulMove(move);
+    },
+    isInvalidMove(source, target) {
+      return source === target || this.game.turn() !== this.player.color;
+    },
+    makeMove(source, target, piece) {
+      return this.game.move({
         from: source,
         to: target,
-        promotion: piece?.type === "p" && (target[1] === "8" || target[1] === "1") ? "q" : undefined,
+        promotion: this.getPromotion(piece, target),
       });
-      if (move) {
-        console.log(`Move sent: ${JSON.stringify(move)}`);
-        socketClient.sendMove(move);
-        this.onSnapEnd();
-      } else {
-        return "snapback";
+    },
+    getPromotion(piece, target) {
+      if (piece?.type !== "p") return undefined;
+      if (target[1] !== "8" && target[1] !== "1") return undefined;
+      return "q";
+    },
+    handleSuccessfulMove(move) {
+      console.log(`Move sent: ${JSON.stringify(move)}`);
+      this.$emit("move-sent", move);
+      boardService.move.emit(move);
+      console.log("Move emitted via boardService");
+      this.onSnapEnd();
+      this.updateStatus();
+    },
+    handleInvalidMove(source, target) {
+      const errorMessage = `Movimento inválido: ${source} para ${target}. Verifique as regras do xadrez.`;
+      this.emitStatus("danger", errorMessage);
+    },
+    onReceivedMove(data) {
+      console.log("Move received on client:", data);
+      if (this.isInvalidReceivedMove(data)) return;
+
+      const move = this.makeMove(data.from, data.to, { type: data.piece });
+      if (!move) {
+        console.error("Invalid move received:", data);
+        return;
       }
+      this.updateBoardAfterMove();
     },
-    onReceivedMove(source, target) {
-      if (source === target) return "snapback";
-      const piece = this.game.get(source);
-      const move = this.game.move({
-        from: source,
-        to: target,
-        promotion: piece?.type === "p" && (target[1] === "8" || target[1] === "1") ? "q" : undefined,
-      });
-      if (move) this.onSnapEnd();
-      else return "snapback";
-    },
-    removeGreySquares() {
-      document.querySelectorAll(".square-55d63").forEach(square => (square.style.background = ""));
-    },
-    greySquare(square) {
-      const $square = document.querySelector(".square-" + square);
-      $square.style.background = $square.classList.contains("black-3c85d") ? this.blackSquareGrey : this.whiteSquareGrey;
-    },
-    onMouseoverSquare(square) {
-      const moves = this.game.moves({ square, verbose: true });
-      if (moves.length === 0) return;
-      this.greySquare(square);
-      moves.forEach(move => this.greySquare(move.to));
-    },
-    onMouseoutSquare() {
-      this.removeGreySquares();
-    },
-    updateStatus() {
-      if (this.game.isCheckmate()) {
-        this.emitter.emit("status", { variant: "danger", message: "Game over, checkmate." });
-      } else if (this.game.isDraw()) {
-        this.emitter.emit("status", { variant: "danger", message: "Game over, drawn position." });
-      } else if (this.game.inCheck()) {
-        this.emitter.emit("status", { variant: "warning", message: "Check." });
+    isInvalidReceivedMove(data) {
+      if (this.game.turn() !== data.color) {
+        console.error("Received move for wrong color:", data);
+        return true;
       }
+      return false;
+    },
+    updateBoardAfterMove() {
+      this.board.position(this.game.fen());
+      this.updateStatus();
+      this.updateBoardOrientation();
     },
     onSnapEnd() {
       this.board.position(this.game.fen());
@@ -116,77 +128,70 @@ export default {
       this.game.clear();
       this.game.reset();
     },
+    updateStatus() {
+      const status = this.getGameStatus();
+      this.emitStatus("info", status);
+    },
+    getGameStatus() {
+      if (this.game.isCheckmate()) return "Xeque-mate!";
+      if (this.game.isDraw()) return "Empate!";
+      if (this.game.isCheck()) return "Xeque!";
+      return "Jogo em andamento";
+    },
+    initializeBoard() {
+      this.config = {
+        draggable: true,
+        position: "start",
+        orientation: this.boardOrientation,
+        onDragStart: this.onDragStart,
+        onDrop: this.onDrop,
+        onSnapEnd: this.onSnapEnd,
+      };
+      this.board = Chessboard("myBoard", this.config);
+    },
+    setupEventListeners() {
+      boardService.onRoom((data) => this.emitter.emit("room", data));
+      boardService.onPlayer(this.handlePlayerJoin);
+      boardService.onOpponent(this.handleOpponentJoin);
+      boardService.onMoveReceived(this.onReceivedMove);
+      boardService.onDisconnected(this.handleDisconnect);
+    },
+    handlePlayerJoin(data) {
+      this.emitter.emit("player", data);
+      const colorMessage = data.color === "w" ? "Branca" : "Preta";
+      this.emitStatus("info", `Voce entrou na sala com a cor ${colorMessage}`);
+      this.updateBoardOrientation();
+      if (this.player.id) peerService.initialize(this.room, this.player.id);
+    },
+    handleOpponentJoin(data) {
+      if (this.opponent) return;
+      this.emitter.emit("opponent", data);
+      const colorMessage = data.color === "w" ? "Branca" : "Preta";
+      this.emitStatus("info", `Oponente entrou na sala com a cor ${colorMessage}`);
+      boardService.move.emit({ type: "joined", player: this.player });
+    },
+    handleDisconnect() {
+      this.emitStatus("danger", "Oponente saiu da sala!");
+      this.emitter.emit("opponent", "");
+      this.clearBoard();
+    },
+    emitStatus(variant, message) {
+      this.emitter.emit("status", { variant, message });
+    },
   },
   mounted() {
-    this.config = {
-      draggable: true,
-      position: "start",
-      orientation: this.boardOrientation,
-      onDragStart: this.onDragStart,
-      onDrop: this.onDrop,
-      onMouseoutSquare: this.onMouseoutSquare,
-      onMouseoverSquare: this.onMouseoverSquare,
-      onSnapEnd: this.onSnapEnd,
-    };
-    console.log("Initializing board with config:", this.config);
-    this.board = Chessboard("myBoard", this.config);
-
-    this.room = this.$parent.room;
-    console.log("Joining room:", this.room);
-    if (this.room) socketClient.joinRoom(this.room);
-
-    socketClient.onRoom(data => {
-      console.log("Room data received:", data);
-      this.emitter.emit("room", data);
-    });
-    socketClient.onPlayer(data => {
-      console.log("Player data received:", data);
-      this.emitter.emit("player", data);
-      this.emitter.emit("status", {
-        variant: "info",
-        message: data.color === "w" ? "Voce entrou na sala com a cor Branca " : "Voce entrou na sala com a cor Preta",
-      });
-      this.player = this.$parent.player;
-      this.updateBoardOrientation();
-      if (this.player?.id) peerService.initialize(this.room, this.player.id);
-    });
-    socketClient.onOpponent(data => {
-      console.log("Opponent data received:", data);
-      if (!this.opponent) {
-        this.emitter.emit("opponent", data);
-        this.emitter.emit("status", {
-          variant: "info",
-          message: data.color === "w" ? "Oponente entrou na sala com a cor Branca " : "Oponente entrou na sala com a cor Preta",
-        });
-        this.opponent = this.$parent.opponent;
-        socketClient.sendMove("joined", this.player);
-      }
-    });
-    socketClient.onMoveReceived(data => {
-      console.log(`Move received: ${JSON.stringify(data)}`);
-      this.onReceivedMove(data.from, data.to);
-      this.onSnapEnd();
-      this.updateStatus();
-    });
-    socketClient.onDisconnected(() => {
-      console.log("Opponent disconnected");
-      this.emitter.emit("status", { variant: "danger", message: "Oponente saiu da sala!" });
-      this.emitter.emit("opponent", "");
-      this.opponent = null;
-      this.clearBoard();
-    });
-    this.emitter.on("send-message", socketClient.sendMessage);
-    this.emitter.on("peer", data => socketClient.sendMove("peer", data));
-
-    socketClient.on('user-connected', userId => {
-      console.log("User connected:", userId);
-      peerService.callPeer(userId);
-    });
-
-    socketClient.on('signal', ({ signal }) => {
-      console.log("Signal received:", signal);
-      peerService.peer.signal(signal);
-    });
+    this.initializeBoard();
+    if (this.room) boardService.joinRoom(this.room);
+    this.setupEventListeners();
+    this.updateBoardOrientation();
+  },
+  watch: {
+    player: {
+      handler() {
+        this.updateBoardOrientation();
+      },
+      deep: true,
+    },
   },
 };
 </script>

@@ -1,6 +1,6 @@
 <template>
   <b-container class="accordion p-0 m-0" role="tablist">
-    <b-card no-body class="d-flex flex-column" style="height: 100%">
+    <b-card no-body class="d-flex flex-column h-100">
       <b-card-header header-tag="header" role="tab" class="flex-shrink-0">
         <b-input-group prepend="@">
           <b-form-input
@@ -8,40 +8,24 @@
             placeholder="Username"
             :state="nameValidationState"
             @input="resetNameValidationState"
-          ></b-form-input>
+          />
           <b-button
             @click="$emit('toggle-video-stream')"
-            :variant="showVideoStream ? 'primary' : 'outline-primary'"
-            :aria-label="showVideoStream ? 'Stop video' : 'Start video'"
+            :variant="videoButtonVariant"
+            :aria-label="videoButtonLabel"
           >
-            <b-icon
-              :icon="showVideoStream ? 'camera-video-fill' : 'camera-video'"
-            ></b-icon>
+            <b-icon :icon="videoButtonIcon" />
           </b-button>
         </b-input-group>
         <template v-if="nameValidationState === 'invalid'">
-          Digite um nome de usuario para enviar mensagens!
+          Digite um nome de usuário para enviar mensagens!
         </template>
       </b-card-header>
-      <b-card-body class="messages-container flex-grow-1">
-        <b-container
-          v-for="message in localMessages"
-          :key="message.id"
-          class="message"
-        >
-          <b-card
-            :img-src="
-              message && message.color === 'w'
-                ? '/wikipedia/wK.png'
-                : '/wikipedia/bK.png'
-            "
-            img-alt="Card image"
-            img-right
-          >
-            <b-card-text>{{ message.message }}</b-card-text>
-          </b-card>
-          <br />
-        </b-container>
+      <b-card-body class="messages-container flex-grow-1" ref="messagesContainer">
+        <b-alert show variant="info" v-if="showVideoStream">
+          Videochamada em andamento
+        </b-alert>
+        <MessageList :messages="localMessages" />
       </b-card-body>
       <template #footer>
         <b-row align-v="end" class="flex-shrink-0">
@@ -51,7 +35,7 @@
               v-model="text"
               @keyup.enter="sendMessage"
               ref="input"
-            ></b-form-input>
+            />
             <b-input-group-append>
               <b-button variant="primary" @click="sendMessage">Enviar</b-button>
             </b-input-group-append>
@@ -63,12 +47,17 @@
 </template>
 
 <script>
+import { ref, computed, onMounted, onUnmounted, nextTick, watch } from 'vue';
 import socketClient from "@/utils/socketClient";
+import MessageList from '@/components/MessageList.vue';
 
 export default {
   name: "MainChat",
+  components: {
+    MessageList
+  },
   props: {
-    emitter: {
+    player: {
       type: Object,
       required: true,
     },
@@ -76,48 +65,84 @@ export default {
       type: Boolean,
       default: false,
     },
-    player: {
-      type: Object,
-      required: true,
-    },
   },
-  data() {
-    return {
-      name: "",
-      text: "",
-      localMessages: [],
-      nameValidationState: null,
+  setup(props) {
+    const name = ref("");
+    const text = ref("");
+    const localMessages = ref([]);
+    const nameValidationState = ref(null);
+    const messagesContainer = ref(null);
+
+    const resetNameValidationState = () => {
+      nameValidationState.value = null;
     };
-  },
-  methods: {
-    resetNameValidationState() {
-      this.nameValidationState = null;
-    },
-    sendMessage() {
-      if (!this.name) {
-        this.nameValidationState = "invalid";
+
+    const scrollToBottom = () => {
+      nextTick(() => {
+        if (!messagesContainer.value) return;
+        messagesContainer.value.scrollTop = messagesContainer.value.scrollHeight;
+      });
+    };
+
+    const sendMessage = () => {
+      if (!name.value) {
+        nameValidationState.value = "invalid";
         return;
       }
-      const message = {
-        id: Date.now(),
-        message: this.text,
-        color: this.player.color, // Acesse a cor do player de forma segura
-      };
-      this.localMessages.push(message);
-      socketClient.emitEvent("send-message", message);
-      this.text = "";
-    },
-    addMessage(message, color) {
-      this.localMessages.push({ id: Date.now(), message, color });
-      console.log(`jogador ${color} enviou uma mensagem`);
-    },
-  },
-  mounted() {
-    socketClient.onEvent("received-message", (data) => {
-      console.log(data);
-      const { message, color } = data;
-      this.addMessage(message, color);
+      const message = createMessage();
+      localMessages.value.push(message);
+      socketClient.sendMessage(message);
+      text.value = "";
+      scrollToBottom();
+    };
+
+    const createMessage = () => ({
+      id: Date.now(),
+      message: text.value,
+      color: props.player.color,
+      name: name.value,
     });
+
+    const addMessage = (message) => {
+      localMessages.value.push(message);
+      scrollToBottom();
+    };
+
+    const videoButtonVariant = computed(() => 
+      props.showVideoStream ? 'primary' : 'outline-primary'
+    );
+
+    const videoButtonLabel = computed(() => 
+      props.showVideoStream ? 'Stop video' : 'Start video'
+    );
+
+    const videoButtonIcon = computed(() => 
+      props.showVideoStream ? 'camera-video-fill' : 'camera-video'
+    );
+
+    onMounted(() => {
+      socketClient.onReceivedMessage(addMessage);
+      scrollToBottom();
+    });
+
+    onUnmounted(() => {
+      socketClient.offReceivedMessage();
+    });
+
+    watch(localMessages, scrollToBottom, { deep: true });
+
+    return {
+      name,
+      text,
+      localMessages,
+      nameValidationState,
+      resetNameValidationState,
+      sendMessage,
+      videoButtonVariant,
+      videoButtonLabel,
+      videoButtonIcon,
+      messagesContainer,
+    };
   },
 };
 </script>
@@ -132,26 +157,7 @@ export default {
 .messages-container {
   flex: 1;
   overflow-y: auto;
-  height: calc(
-    100% - 56px
-  ); /* Adjust height to account for header and footer */
-}
-
-.message {
-  margin-bottom: 10px;
-}
-
-@media (min-width: 769px) {
-  .messages-container {
-    height: calc(
-      100% - 56px
-    ); /* Adjust height to account for header and footer */
-  }
-}
-
-@media (max-width: 768px) {
-  .messages-container {
-    height: 80vh;
-  }
+  height: calc(100% - 56px);
+  scroll-behavior: smooth;
 }
 </style>

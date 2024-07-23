@@ -4,17 +4,12 @@
       v-for="(stream, index) in streams"
       :key="index"
       :class="['video-circle', { dragging: stream.isDragging }]"
-      :style="{
-        left: `${stream.posX}px`,
-        top: `${stream.posY}px`,
-        width: `${stream.size}px`,
-        height: `${stream.size}px`,
-      }"
+      :style="getStreamStyle(stream)"
       @mousedown="startDragging(index, $event)"
       @touchstart="startDragging(index, $event)"
     >
       <video
-        :ref="el => updateVideoRef(el, index)"
+        :ref="(el) => updateVideoRef(el, index)"
         :srcObject.prop="stream.mediaStream"
         autoplay
         :muted="stream.isMuted"
@@ -26,7 +21,14 @@
           @click="toggleMute(index)"
           class="control-button"
         >
-          <b-icon :icon="stream.isMuted ? 'mic-mute-fill' : 'mic-fill'"></b-icon>
+          <b-icon :icon="getMuteIcon(stream.isAudioMuted)"></b-icon>
+        </b-button>
+        <b-button
+          variant="light"
+          @click="toggleVideo(index)"
+          class="control-button"
+        >
+          <b-icon :icon="getVideoIcon(stream.isVideoOff)"></b-icon>
         </b-button>
         <b-button
           variant="danger"
@@ -46,9 +48,9 @@
 </template>
 
 <script>
-import { ref, onUnmounted, nextTick } from "vue";
-import Peer from "peerjs";
-import socketClient from "@/utils/socketClient";
+import { ref, onUnmounted, onMounted } from "vue";
+import videoService from "@/services/videoService";
+import notificationService from "@/services/notificationService";
 
 export default {
   name: "VideoStream",
@@ -57,21 +59,21 @@ export default {
       type: Array,
       required: true,
     },
+    roomId: {
+      type: String,
+      required: true,
+    },
   },
   setup(props, { emit }) {
     const videoRefs = ref([]);
+    const draggingStream = ref(null);
+    const offset = ref({ x: 0, y: 0 });
     const peer = ref(null);
     const localStream = ref(null);
     const connections = ref([]);
-    const draggingStream = ref(null);
-    const offset = ref({ x: 0, y: 0 });
-    const ownId = ref('');
-    const peers = ref({});
 
     const updateVideoRef = (el, index) => {
-      if (el) {
-        videoRefs.value[index] = el;
-      }
+      if (el) videoRefs.value[index] = el;
     };
 
     const startDragging = (index, event) => {
@@ -85,10 +87,21 @@ export default {
     };
 
     const onDrag = (event) => {
-      if (draggingStream.value !== null) {
-        emit('update-stream', { index: draggingStream.value, key: 'posX', value: event.clientX - offset.value.x });
-        emit('update-stream', { index: draggingStream.value, key: 'posY', value: event.clientY - offset.value.y });
-      }
+      if (draggingStream.value === null) return;
+      updateStreamPosition(event.clientX, event.clientY);
+    };
+
+    const updateStreamPosition = (clientX, clientY) => {
+      emit("update-stream", {
+        index: draggingStream.value,
+        key: "posX",
+        value: clientX - offset.value.x,
+      });
+      emit("update-stream", {
+        index: draggingStream.value,
+        key: "posY",
+        value: clientY - offset.value.y,
+      });
     };
 
     const stopDragging = () => {
@@ -98,97 +111,131 @@ export default {
     };
 
     const startResizing = (index) => {
-      // Implement your resizing logic here
       console.log(`Start resizing stream ${index}`);
     };
 
     const toggleMute = (index) => {
-      emit('update-stream', { index, key: 'isMuted', value: !props.streams[index].isMuted });
+      const stream = props.streams[index];
+      const newMuteState = !stream.isMuted;
+      stream.mediaStream.getAudioTracks().forEach((track) => {
+        track.enabled = !newMuteState;
+      });
+      emit("update-stream", { index, key: "isMuted", value: newMuteState });
     };
 
-    const startCall = async () => {
-      localStream.value = await navigator.mediaDevices.getUserMedia({ video: true, audio: true });
-      
-      await nextTick();
-      if (videoRefs.value[0]) {
-        videoRefs.value[0].srcObject = localStream.value;
+    const setVideoQuality = (index, quality) => {
+      const stream = props.streams[index];
+      stream.mediaStream.getVideoTracks().forEach((track) => {
+        track.applyConstraints({ width: quality });
+      });
+      emit("update-stream", { index, key: "quality", value: quality });
+    };
+
+    const startScreenShare = async (index) => {
+      try {
+        const stream = await navigator.mediaDevices.getDisplayMedia({ video: true });
+        const videoTrack = stream.getVideoTracks()[0];
+        const sender = props.streams[index].peerConnection
+          .getSenders()
+          .find((s) => s.track.kind === videoTrack.kind);
+        await sender.replaceTrack(videoTrack);
+        videoTrack.onended = () => {
+          const originalTrack = props.streams[index].mediaStream.getVideoTracks()[0];
+          sender.replaceTrack(originalTrack);
+        };
+      } catch (error) {
+        console.error("Error starting screen share:", error);
       }
-
-      peer.value = new Peer(undefined, {
-        config: {
-          iceServers: [
-            { urls: 'stun:stun.l.google.com:19302' },
-            {
-              urls: 'turn:your.turn.server:3478',
-              username: 'your-username',
-              credential: 'your-credential'
-            }
-          ]
-        }
-      });
-
-      peer.value.on('open', id => {
-        ownId.value = id;
-        socketClient.joinRoom('your-room-id');
-        socketClient.sendPeerInfo({ id });
-      });
-
-      peer.value.on('call', call => {
-        call.answer(localStream.value);
-        call.on('stream', remoteStream => {
-          addVideoStream(call.peer, remoteStream);
-        });
-      });
-
-      socketClient.on('user-connected', userId => {
-        if (userId !== ownId.value) {
-          callUser(userId);
-        }
-      });
-
-      socketClient.on('user-disconnected', userId => {
-        if (peers.value[userId]) {
-          peers.value[userId].close();
-        }
-      });
     };
 
-    const callUser = (userId) => {
-      const call = peer.value.call(userId, localStream.value);
+    const closeStream = (index) => {
+      videoService.closeStream(index, props.streams, emit);
+    };
+
+    const handleIncomingCall = (callerId) => {
+      if (notificationService?.notifyIncomingCall) {
+        notificationService.notifyIncomingCall(callerId);
+      }
+      if (confirm(`Recebendo chamada de ${callerId}. Deseja atender?`)) {
+        startCall(callerId);
+      }
+    };
+
+    const startCall = async (callerId) => {
+      try {
+        const result = await videoService.startCall(props.roomId, callerId);
+        if (!result) return;
+        const { peer: newPeer, localStream: newLocalStream } = result;
+        peer.value = newPeer;
+        localStream.value = newLocalStream;
+        addVideoStream(newPeer.id, newLocalStream);
+        newPeer.on("call", handleIncomingPeerCall);
+        newPeer.on("error", handleConnectionError);
+      } catch (error) {
+        console.error("Error starting call:", error);
+        emit("connection-error", error.message);
+      }
+    };
+
+    const handleIncomingPeerCall = (call) => {
+      call.answer(localStream.value);
       handleStream(call);
     };
 
     const handleStream = (call) => {
-      call.on('stream', remoteStream => {
-        addVideoStream(call.peer, remoteStream);
-      });
-      call.on('close', () => {
-        emit('remove-stream', call.peer);
-      });
-      peers.value[call.peer] = call;
+      call.on("stream", (remoteStream) => addVideoStream(call.peer, remoteStream));
+      call.on("close", () => removeVideoStream(call.peer));
     };
 
     const addVideoStream = (id, stream) => {
-      emit('add-stream', { id, stream });
+      const newStream = {
+        id,
+        mediaStream: stream,
+        posX: 0,
+        posY: 0,
+        size: 150,
+        isMuted: false,
+        isDragging: false,
+        isVideoOff: false,
+        peerConnection: null,
+      };
+      emit("add-stream", newStream);
     };
 
-    const closeStream = (index) => {
-      if (props.streams[index].mediaStream) {
-        props.streams[index].mediaStream.getTracks().forEach(track => track.stop());
-      }
-      emit('close-stream', index);
-      emit('toggle-video-stream');
+    const removeVideoStream = (id) => {
+      emit("remove-stream", id);
     };
+
+    const handleConnectionError = (error) => {
+      const errorMessage = error.type === "max-reconnect-attempts"
+        ? "Unable to connect after multiple attempts. Please try again later."
+        : `Connection error: ${error.type}`;
+      emit("connection-error", errorMessage);
+    };
+
+    onMounted(() => {
+      videoService.onIncomingCall(({ callerId }) => handleIncomingCall(callerId));
+      videoService.onCallEnded(() => videoService.closeAllStreams(props.streams));
+    });
 
     onUnmounted(() => {
-      if (peer.value) {
-        peer.value.destroy();
-      }
-      if (localStream.value) {
-        localStream.value.getTracks().forEach(track => track.stop());
-      }
-      connections.value.forEach(conn => conn.close());
+      if (peer.value) peer.value.destroy();
+      if (localStream.value) localStream.value.getTracks().forEach((track) => track.stop());
+      connections.value.forEach((conn) => conn.close());
     });
+
+    const getStreamStyle = (stream) => ({
+      left: `${stream.posX}px`,
+      top: `${stream.posY}px`,
+      width: `${stream.size}px`,
+      height: `${stream.size}px`,
+    });
+
+    const getMuteIcon = (isAudioMuted) => 
+      isAudioMuted ? 'mic-mute-fill' : 'mic-fill';
+
+    const getVideoIcon = (isVideoOff) => 
+      isVideoOff ? 'camera-video-off-fill' : 'camera-video-fill';
 
     return {
       videoRefs,
@@ -197,7 +244,13 @@ export default {
       startResizing,
       toggleMute,
       closeStream,
-      startCall, // Expose startCall method
+      startCall,
+      setVideoQuality,
+      startScreenShare,
+      handleConnectionError,
+      getStreamStyle,
+      getMuteIcon,
+      getVideoIcon,
     };
   },
 };
