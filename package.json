@@ -16,7 +16,7 @@
     "chessboardjs-vue3": "^0.0.5",
     "core-js": "^3.27.1",
     "dotenv": "^16.4.1",
-    "express": "^4.19.2",
+    "express": "^4.21.0",
     "loader-utils": "^3.2.1",
     "mitt": "^3.0.0",
     "peerjs": "^1.5.4",
@@ -36,7 +36,7 @@
     "@vue/component-compiler-utils": "^3.3.0",
     "eslint": "^8.31.0",
     "eslint-plugin-vue": "^9.8.0",
-    "postcss": "^8.4.41",
+    "postcss": "^8.4.42",
     "vue-loader": "^17.4.2"
   },
   "eslintConfig": {
