@@ -36,7 +36,7 @@
     "@vue/component-compiler-utils": "^3.3.0",
     "eslint": "^8.31.0",
     "eslint-plugin-vue": "^9.8.0",
-    "postcss": "^8.4.42",
+    "postcss": "^8.4.43",
     "vue-loader": "^17.4.2"
   },
   "eslintConfig": {
