@@ -16,11 +16,11 @@
     "chessboardjs-vue3": "^0.0.5",
     "core-js": "^3.27.1",
     "dotenv": "^16.4.1",
-    "express": "^4.21.0",
+    "express": "^4.21.1",
     "loader-utils": "^3.2.1",
     "mitt": "^3.0.0",
     "peerjs": "^1.5.4",
-    "socket.io": "^4.5.4",
+    "socket.io": "^4.8.0",
     "socket.io-client": "^4.7.5",
     "vue": "^3.2.45",
     "vue-socket.io": "^3.0.10",
@@ -36,7 +36,7 @@
     "@vue/component-compiler-utils": "^3.3.0",
     "eslint": "^8.31.0",
     "eslint-plugin-vue": "^9.8.0",
-    "postcss": "^8.4.43",
+    "postcss": "^8.4.44",
     "vue-loader": "^17.4.2"
   },
   "eslintConfig": {
