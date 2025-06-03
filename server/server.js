@@ -71,7 +71,7 @@ io.on('connection', (socket) => {
             }
         }
         rooms[roomId].players++;
-        console.log(`A player has connected to this room: ${roomId}`, rooms[roomId]);
+        console.log('A player has connected to this room: %s', roomId, rooms[roomId]);
         // envia dados do jogador para oponente
         if (rooms[roomId].pid.get(0) === playerId || rooms[roomId].pid.get(1) === playerId) {
             let opponent = (rooms[roomId].pid.get(0) === playerId) ? rooms[roomId].pid.get(1) : rooms[roomId].pid.get(0);
